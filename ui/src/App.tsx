@@ -22,6 +22,11 @@ interface ModInfo {
   entrypoint: string;
 }
 
+interface ExternalInfo {
+  name: string;
+  path: string;
+}
+
 export default function App() {
   const [activeTab, setActiveTab] = useState<'launcher' | 'profiles' | 'console'>('launcher');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
@@ -32,6 +37,7 @@ export default function App() {
   const [launchStatus, setLaunchStatus] = useState<string>('idle'); // idle, resolving, success, failed
   const [importStatus, setImportStatus] = useState<{ status: string; message: string }>({ status: '', message: '' });
   const [modsList, setModsList] = useState<ModInfo[]>([]);
+  const [externalsList, setExternalsList] = useState<ExternalInfo[]>([]);
 
   useEffect(() => {
     let listenerRegistered = false;
@@ -47,6 +53,7 @@ export default function App() {
             setProfiles(detail.profiles || []);
             setActiveProfile(detail.active || 'Default');
             setModsList(detail.mods || []);
+            setExternalsList(detail.externals || []);
           } else if (event === 'launchStatus') {
             setLaunchStatus(detail.status || 'idle');
           } else if (event === 'importStatus') {
@@ -157,6 +164,7 @@ export default function App() {
             launchStatus={launchStatus}
             importStatus={importStatus}
             modsList={modsList}
+            externalsList={externalsList}
             handleProfileChange={handleProfileChange}
             handleLaunch={handleLaunch}
             handleImportClick={handleImportClick}

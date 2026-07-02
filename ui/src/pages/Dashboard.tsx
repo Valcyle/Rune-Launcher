@@ -8,12 +8,18 @@ interface ModInfo {
   entrypoint: string;
 }
 
+interface ExternalInfo {
+  name: string;
+  path: string;
+}
+
 interface DashboardProps {
   profiles: string[];
   activeProfile: string;
   launchStatus: string;
   importStatus: { status: string; message: string };
   modsList: ModInfo[];
+  externalsList: ExternalInfo[];
   handleProfileChange: (name: string) => void;
   handleLaunch: () => void;
   handleImportClick: () => void;
@@ -27,6 +33,7 @@ export default function Dashboard({
   launchStatus,
   importStatus,
   modsList,
+  externalsList,
   handleProfileChange,
   handleLaunch,
   handleImportClick,
@@ -161,37 +168,74 @@ export default function Dashboard({
           borderRadius: '16px',
           padding: '24px',
           display: 'flex',
-          flexDirection: 'column'
+          flexDirection: 'column',
+          gap: '20px'
         }}>
-          <h3 style={{ fontSize: '15px', fontWeight: 700, margin: '0 0 16px 0', color: colors.text }}>Profile Dependencies</h3>
+          <h3 style={{ fontSize: '15px', fontWeight: 700, margin: 0, color: colors.text }}>Profile Dependencies</h3>
           
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
-            {modsList.length > 0 ? (
-              modsList.map((m) => (
-                <div key={m.id} style={{
-                  padding: '14px',
-                  backgroundColor: colors.panel,
-                  borderRadius: '10px',
-                  border: `1px solid ${colors.border}`,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '4px'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontWeight: 700, fontSize: '13.5px', color: colors.text }}>{m.name}</span>
-                    <span style={{ fontSize: '11px', color: colors.glowGreen, backgroundColor: theme === 'dark' ? 'rgba(16,185,129,0.08)' : '#e6fbf2', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>v{m.version}</span>
+          {/* Section 1: Client DLLs (externals) */}
+          <div>
+            <h4 style={{ fontSize: '11px', fontWeight: 700, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 10px 0' }}>
+              External Client (Step 2 DLLs)
+            </h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {externalsList.length > 0 ? (
+                externalsList.map((ext) => (
+                  <div key={ext.path} style={{
+                    padding: '10px 14px',
+                    backgroundColor: colors.panel,
+                    borderRadius: '8px',
+                    border: `1px solid ${colors.border}`,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    fontSize: '12px'
+                  }}>
+                    <span style={{ fontWeight: 600, color: colors.text }}>{ext.name}</span>
+                    <span style={{ fontSize: '10.5px', color: colors.glowPurple, fontWeight: 600 }}>Active Inject Target</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: colors.textMuted }}>
-                    <span>Target DLL: `{m.entrypoint}`</span>
-                    <span>Dependencies resolved</span>
-                  </div>
+                ))
+              ) : (
+                <div style={{ padding: '16px', textAlign: 'center', color: colors.textMuted, fontSize: '12px', border: `1px dashed ${colors.border}`, borderRadius: '8px' }}>
+                  No custom client DLLs loaded.
                 </div>
-              ))
-            ) : (
-              <div style={{ padding: '24px', textAlign: 'center', color: colors.textMuted, fontSize: '13px' }}>
-                No active mods found in this profile.
-              </div>
-            )}
+              )}
+            </div>
+          </div>
+
+          {/* Section 2: Mod Packages (modsList) */}
+          <div>
+            <h4 style={{ fontSize: '11px', fontWeight: 700, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 10px 0' }}>
+              Mod Packages (Step 3 DLLs)
+            </h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {modsList.length > 0 ? (
+                modsList.map((m) => (
+                  <div key={m.id} style={{
+                    padding: '14px',
+                    backgroundColor: colors.panel,
+                    borderRadius: '10px',
+                    border: `1px solid ${colors.border}`,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '4px'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontWeight: 700, fontSize: '13.5px', color: colors.text }}>{m.name}</span>
+                      <span style={{ fontSize: '11px', color: colors.glowGreen, backgroundColor: theme === 'dark' ? 'rgba(16,185,129,0.08)' : '#e6fbf2', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>v{m.version}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: colors.textMuted }}>
+                      <span>Target DLL: `{m.entrypoint}`</span>
+                      <span>Dependencies resolved</span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div style={{ padding: '16px', textAlign: 'center', color: colors.textMuted, fontSize: '12px', border: `1px dashed ${colors.border}`, borderRadius: '8px' }}>
+                  No active mods found in this profile.
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

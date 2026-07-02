@@ -385,10 +385,27 @@ void AppWindow::syncProfilesToUI() const {
             }
         }
 
+        // Scan profiles/[Profile]/external/ for raw client DLLs
+        std::filesystem::path externalPath = profilePath / "external";
+        nlohmann::json externalsArray = nlohmann::json::array();
+        
+        if (std::filesystem::exists(externalPath)) {
+            for (const auto& entry : std::filesystem::directory_iterator(externalPath)) {
+                if (entry.is_regular_file() && entry.path().extension() == ".dll") {
+                    nlohmann::json extInfo = {
+                        {"name", entry.path().filename().string()},
+                        {"path", "external/" + entry.path().filename().string()}
+                    };
+                    externalsArray.push_back(extInfo);
+                }
+            }
+        }
+
         nlohmann::json detail = {
             {"profiles", profiles},
             {"active", activeProfile},
-            {"mods", modsArray}
+            {"mods", modsArray},
+            {"externals", externalsArray}
         };
         postEventToUI("profilesUpdated", detail.dump());
     } catch (const std::exception& e) {
