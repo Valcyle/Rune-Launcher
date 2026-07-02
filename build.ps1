@@ -6,7 +6,7 @@ if (-not (Test-Path "build")) {
 }
 
 Write-Host "Compiling RuneLauncher..."
-g++ -std=c++20 -O2 src/main.cpp src/ProfileManager.cpp -o build/launcher.exe
+g++ -std=c++20 -O2 -Iinclude src/main.cpp src/ProfileManager.cpp src/ZipUtility.cpp src/ModImporter.cpp -o build/launcher.exe -lole32 -loleaut32 -luuid
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host "Build Succeeded: build/launcher.exe" -ForegroundColor Green
