@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import Dashboard from './pages/Dashboard';
 import Profiles from './pages/Profiles';
+import TitleBar from './components/TitleBar';
+import './App.css';
 
 declare global {
   interface Window {
@@ -130,78 +132,97 @@ export default function App() {
   return (
     <div style={{
       display: 'flex',
+      flexDirection: 'column',
       width: '100%',
-      minHeight: '100vh',
+      height: '100vh',
       backgroundColor: colors.bg,
       color: colors.text,
       transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
       margin: 0,
       padding: 0,
-      boxSizing: 'border-box'
+      boxSizing: 'border-box',
+      overflow: 'hidden'
     }}>
-      {/* 1. Left Sidebar component */}
-      <Sidebar
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        theme={theme}
-        setTheme={setTheme}
-        colors={colors}
+      {/* 1. Custom Top Title Bar */}
+      <TitleBar 
+        theme={theme} 
+        colors={colors} 
+        sendMessageToHost={sendMessageToHost} 
       />
 
-      {/* 2. Main Tab View */}
-      <main style={{
-        flex: 1,
-        padding: '40px 48px',
-        overflowY: 'auto',
+      <div style={{
         display: 'flex',
-        flexDirection: 'column',
-        gap: '32px'
+        flexDirection: 'row',
+        flex: 1,
+        width: '100%',
+        height: 'calc(100vh - 40px)',
+        overflow: 'hidden'
       }}>
-        {activeTab === 'launcher' && (
-          <Dashboard
-            profiles={profiles}
-            activeProfile={activeProfile}
-            launchStatus={launchStatus}
-            importStatus={importStatus}
-            modsList={modsList}
-            externalsList={externalsList}
-            handleProfileChange={handleProfileChange}
-            handleLaunch={handleLaunch}
-            handleImportClick={handleImportClick}
-            theme={theme}
-            colors={colors}
-          />
-        )}
+        {/* 2. Left Sidebar component */}
+        <Sidebar
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          theme={theme}
+          setTheme={setTheme}
+          colors={colors}
+        />
 
-        {activeTab === 'profiles' && (
-          <Profiles colors={colors} />
-        )}
+        {/* 3. Main Tab View */}
+        <main style={{
+          flex: 1,
+          padding: '32px 40px',
+          overflowY: 'auto',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '28px',
+          boxSizing: 'border-box'
+        }}>
+          {activeTab === 'launcher' && (
+            <Dashboard
+              profiles={profiles}
+              activeProfile={activeProfile}
+              launchStatus={launchStatus}
+              importStatus={importStatus}
+              modsList={modsList}
+              externalsList={externalsList}
+              handleProfileChange={handleProfileChange}
+              handleLaunch={handleLaunch}
+              handleImportClick={handleImportClick}
+              theme={theme}
+              colors={colors}
+            />
+          )}
 
-        {/* Global Keyframes Animation */}
-        <style dangerouslySetInnerHTML={{__html: `
-          .spinner {
-            width: 14px;
-            height: 14px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-top: 2px solid #fff;
-            borderRadius: 50%;
-            animation: spin 1s linear infinite;
-          }
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-          @keyframes pulse {
-            0% { transform: scale(0.95); opacity: 0.5; }
-            50% { transform: scale(1.05); opacity: 1; }
-            100% { transform: scale(0.95); opacity: 0.5; }
-          }
-          body {
-            margin: 0;
-            padding: 0;
-          }
-        `}} />
-      </main>
+          {activeTab === 'profiles' && (
+            <Profiles colors={colors} />
+          )}
+
+          {/* Global Keyframes Animation */}
+          <style dangerouslySetInnerHTML={{__html: `
+            .spinner {
+              width: 14px;
+              height: 14px;
+              border: 2px solid rgba(255, 255, 255, 0.3);
+              border-top: 2px solid #fff;
+              borderRadius: 50%;
+              animation: spin 1s linear infinite;
+            }
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+            @keyframes pulse {
+              0% { transform: scale(0.95); opacity: 0.5; }
+              50% { transform: scale(1.05); opacity: 1; }
+              100% { transform: scale(0.95); opacity: 0.5; }
+            }
+            body {
+              margin: 0;
+              padding: 0;
+            }
+          `}} />
+        </main>
+      </div>
     </div>
   );
 }

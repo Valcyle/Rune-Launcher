@@ -14,7 +14,7 @@ export default function Profiles({ colors }: ProfilesProps) {
     }}>
       <h2 style={{ fontSize: '20px', fontWeight: 800, margin: '0 0 8px 0', color: colors.text }}>Profile Directory Settings</h2>
       <p style={{ color: colors.textMuted, fontSize: '13px', margin: '0 0 24px 0' }}>
-        ランチャーのプロファイル配置やグローバルデータパスを構成します。
+        Configure the launcher's profile layout and global data path.
       </p>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -27,7 +27,7 @@ export default function Profiles({ colors }: ProfilesProps) {
         }}>
           <div>
             <h4 style={{ margin: '0 0 4px 0', fontSize: '14px', fontWeight: 700, color: colors.text }}>RuneCore.dll Hook Path</h4>
-            <p style={{ margin: 0, fontSize: '12px', color: colors.textMuted }}>インジェクターのベースフックライブラリのパスを指定します。</p>
+            <p style={{ margin: 0, fontSize: '12px', color: colors.textMuted }}>Specify the path to the Injector base hook library.</p>
           </div>
           <code style={{ fontSize: '12px', background: colors.panel, padding: '4px 8px', borderRadius: '4px', color: colors.text }}>
             [Launcher Root]/RuneCore.dll

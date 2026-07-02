@@ -1,4 +1,6 @@
 #include "AppWindow.hpp"
+#include <windowsx.h>
+#include <dwmapi.h>
 #include <nlohmann/json.hpp>
 #include <iostream>
 #include <fstream>
@@ -61,6 +63,51 @@ LRESULT CALLBACK AppWindow::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
     AppWindow* pThis = reinterpret_cast<AppWindow*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
 
     switch (message) {
+    case WM_NCCALCSIZE:
+        if (wParam) {
+            // Remove native Win32 title bar frame while keeping native shadow, rounded corners, and snap layouts
+            return 0;
+        }
+        return DefWindowProc(hWnd, message, wParam, lParam);
+
+    case WM_NCHITTEST: {
+        POINT pt = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+        ScreenToClient(hWnd, &pt);
+
+        RECT rect;
+        GetClientRect(hWnd, &rect);
+
+        const int border = 8; // Resize boundary width in pixels
+
+        // Determine if mouse pointer is on resize borders
+        bool isLeft = pt.x < border;
+        bool isRight = pt.x >= rect.right - border;
+        bool isTop = pt.y < border;
+        bool isBottom = pt.y >= rect.bottom - border;
+
+        if (isTop && isLeft) return HTTOPLEFT;
+        if (isTop && isRight) return HTTOPRIGHT;
+        if (isBottom && isLeft) return HTBOTTOMLEFT;
+        if (isBottom && isRight) return HTBOTTOMRIGHT;
+
+        if (isTop) return HTTOP;
+        if (isBottom) return HTBOTTOM;
+        if (isLeft) return HTLEFT;
+        if (isRight) return HTRIGHT;
+
+        // Match custom TitleBar height (40px)
+        if (pt.y >= 0 && pt.y < 40) {
+            // Ignore the rightmost 110px reserved for Min/Max/Close React buttons
+            if (pt.x < rect.right - 110) {
+                return HTCAPTION; // Allow window drag
+            }
+        }
+        return HTCLIENT;
+    }
+
+    case WM_ERASEBKGND:
+        return 1; // Suppress GDI background repaint to solve white flicker on resizing
+
     case WM_SIZE:
         if (pThis && pThis->m_webController) {
             RECT bounds;
@@ -108,6 +155,13 @@ bool AppWindow::create(int width, int height, const std::wstring& title) {
     }
 
     SetWindowLongPtr(m_hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
+
+    // Force frame recalculation so NCCALCSIZE is triggered and removes the native title bar cleanly
+    SetWindowPos(m_hWnd, nullptr, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER);
+
+    // Extend window frame using DWM to prevent standard double buttons from drawing on startup
+    MARGINS margins = {0, 0, 0, 0};
+    DwmExtendFrameIntoClientArea(m_hWnd, &margins);
 
     ShowWindow(m_hWnd, SW_SHOWNORMAL);
     UpdateWindow(m_hWnd);
@@ -176,6 +230,15 @@ bool AppWindow::initializeWebView() {
                             Microsoft::WRL::ComPtr<ICoreWebView2Settings> settings;
                             if (SUCCEEDED(m_webView->get_Settings(&settings))) {
                                 settings->put_AreDevToolsEnabled(TRUE);
+                                settings->put_AreDefaultContextMenusEnabled(FALSE); // Disable browser right-click menu
+                            }
+
+                            // Set default background color to transparent to prevent white flicker during resize
+                            Microsoft::WRL::ComPtr<ICoreWebView2Controller2> controller2;
+                            const IID local_IID_ICoreWebView2Controller2 = {0xc979903e, 0xd4ca, 0x4228, {0x92, 0xeb, 0x47, 0xee, 0x3f, 0xa9, 0x6e, 0xab}};
+                            if (SUCCEEDED(m_webController->QueryInterface(local_IID_ICoreWebView2Controller2, reinterpret_cast<void**>(controller2.GetAddressOf())))) {
+                                COREWEBVIEW2_COLOR transparentColor = {0, 0, 0, 0}; // Transparent (Alpha = 0)
+                                controller2->put_DefaultBackgroundColor(transparentColor);
                             }
 
                             // Resize WebView to fit parent client bounds
@@ -290,7 +353,23 @@ void AppWindow::handleWebMessage(const std::string& messageJson) {
         auto msg = nlohmann::json::parse(messageJson);
         std::string action = msg.at("action").get<std::string>();
 
-        if (action == "getProfiles") {
+        if (action == "minimizeWindow") {
+            ShowWindow(m_hWnd, SW_MINIMIZE);
+        }
+        else if (action == "maximizeWindow") {
+            WINDOWPLACEMENT wp = { sizeof(wp) };
+            if (GetWindowPlacement(m_hWnd, &wp)) {
+                if (wp.showCmd == SW_SHOWMAXIMIZED) {
+                    ShowWindow(m_hWnd, SW_SHOWNORMAL);
+                } else {
+                    ShowWindow(m_hWnd, SW_SHOWMAXIMIZED);
+                }
+            }
+        }
+        else if (action == "closeWindow") {
+            PostMessage(m_hWnd, WM_CLOSE, 0, 0);
+        }
+        else if (action == "getProfiles") {
             syncProfilesToUI();
         } 
         else if (action == "switchProfile") {

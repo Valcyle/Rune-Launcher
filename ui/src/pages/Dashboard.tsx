@@ -118,7 +118,7 @@ export default function Dashboard({
                 <span>SCANNING PROCESS...</span>
               </>
             ) : (
-              <span>LOAD PIPELINE</span>
+              <span>Launch</span>
             )}
           </button>
         </div>
@@ -149,9 +149,9 @@ export default function Dashboard({
             backgroundColor: launchStatus === 'failed' ? '#ef4444' : '#10b981',
             animation: launchStatus === 'resolving' ? 'pulse 1.5s infinite' : 'none'
           }} />
-          {launchStatus === 'resolving' && 'ゲーム起動待機中... マインクラフト統合版プロセス (Minecraft.Windows.exe) を検知すると自動インジェクションを実行します。'}
-          {launchStatus === 'success' && 'DLLインジェクションに成功しました！ランチャー機能がロードされました。'}
-          {launchStatus === 'failed' && 'ゲーム起動処理に失敗しました。詳細についてはログをご確認ください。'}
+          {launchStatus === 'resolving' && 'Waiting for game launch... The launcher will automatically inject when Minecraft.Windows.exe is detected.'}
+          {launchStatus === 'success' && 'DLL injection successful! Launcher features have been loaded.'}
+          {launchStatus === 'failed' && 'Failed to launch the game. Please check the logs for details.'}
         </div>
       )}
 
@@ -172,7 +172,7 @@ export default function Dashboard({
           gap: '20px'
         }}>
           <h3 style={{ fontSize: '15px', fontWeight: 700, margin: 0, color: colors.text }}>Profile Dependencies</h3>
-          
+
           {/* Section 1: Client DLLs (externals) */}
           <div>
             <h4 style={{ fontSize: '11px', fontWeight: 700, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 10px 0' }}>
@@ -256,7 +256,7 @@ export default function Dashboard({
             </p>
           </div>
 
-          <div 
+          <div
             onClick={handleImportClick}
             onMouseEnter={() => setHovered('import')}
             onMouseLeave={() => setHovered(null)}

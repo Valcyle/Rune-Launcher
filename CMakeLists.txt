@@ -67,7 +67,7 @@ endif()
 # Link Windows COM & WebView2 libraries
 if(WIN32)
     # Link libraries (WebView2 is now loaded dynamically via LoadLibrary)
-    target_link_libraries(launcher PRIVATE ole32 oleaut32 uuid)
+    target_link_libraries(launcher PRIVATE ole32 oleaut32 uuid dwmapi)
 
     # Copy WebView2Loader.dll next to launcher executable
     add_custom_command(TARGET launcher POST_BUILD
