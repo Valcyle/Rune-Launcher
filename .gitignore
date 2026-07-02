@@ -1,1 +1,30 @@
+# Build outputs
+build/
+build_cmake/
+bin/
+out/
+
+# Executables & libraries
+*.exe
+*.dll
+*.so
+*.dylib
+*.lib
+*.a
+*.obj
+*.o
+
+# Runtime profiles generated during execution
+profiles/
+
+# IDE files
+.vscode/
+.vs/
+*.user
+*.suo
+*.sln
+*.vcxproj
+*.filters
+
+# Local specifications
 spec.md
