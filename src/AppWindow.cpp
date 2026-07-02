@@ -1,0 +1,399 @@
+#include "AppWindow.hpp"
+#include <nlohmann/json.hpp>
+#include <iostream>
+#include <fstream>
+#include <filesystem>
+#include <thread>
+
+// Standard COM helper macros
+#define CHECK_FAILURE(hr) if (FAILED(hr)) { std::cerr << "COM Failure: " << std::hex << hr << std::endl; return false; }
+
+#include <functional>
+
+// Macro to generate explicit WebView2 COM handler classes to resolve MinGW compilation issues
+#define DEFINE_WEBVIEW2_CALLBACK(ClassName, InterfaceName, ArgsDecl, ArgsCall) \
+class ClassName : public InterfaceName { \
+public: \
+    ClassName(std::function<HRESULT ArgsDecl> callback) : m_callback(callback), m_refCount(1) {} \
+    virtual ~ClassName() {} \
+    STDMETHODIMP QueryInterface(REFIID riid, void** ppvObject) override { \
+        if (riid == IID_IUnknown || riid == IID_##InterfaceName) { \
+            *ppvObject = static_cast<InterfaceName*>(this); \
+            AddRef(); \
+            return S_OK; \
+        } \
+        *ppvObject = nullptr; \
+        return E_NOINTERFACE; \
+    } \
+    STDMETHODIMP_(ULONG) AddRef() override { return InterlockedIncrement(&m_refCount); } \
+    STDMETHODIMP_(ULONG) Release() override { \
+        ULONG count = InterlockedDecrement(&m_refCount); \
+        if (count == 0) { delete this; } \
+        return count; \
+    } \
+    STDMETHODIMP Invoke ArgsDecl override { return m_callback ArgsCall; } \
+private: \
+    std::function<HRESULT ArgsDecl> m_callback; \
+    ULONG m_refCount; \
+};
+
+DEFINE_WEBVIEW2_CALLBACK(EnvCompletedHandler, ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler, 
+    (HRESULT result, ICoreWebView2Environment* env), (result, env))
+
+DEFINE_WEBVIEW2_CALLBACK(ControllerCompletedHandler, ICoreWebView2CreateCoreWebView2ControllerCompletedHandler, 
+    (HRESULT result, ICoreWebView2Controller* controller), (result, controller))
+
+DEFINE_WEBVIEW2_CALLBACK(MessageReceivedHandler, ICoreWebView2WebMessageReceivedEventHandler, 
+    (ICoreWebView2* sender, ICoreWebView2WebMessageReceivedEventArgs* args), (sender, args))
+
+namespace rune {
+
+AppWindow::AppWindow(ProfileManager pm, ModImporter importer, DependencyResolver resolver, InjectionRunner runner)
+    : m_profileManager(std::move(pm)), m_importer(std::move(importer)), m_resolver(std::move(resolver)), m_runner(std::move(runner)) {}
+
+AppWindow::~AppWindow() {
+    if (m_hWnd) {
+        DestroyWindow(m_hWnd);
+    }
+}
+
+LRESULT CALLBACK AppWindow::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
+    AppWindow* pThis = reinterpret_cast<AppWindow*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+
+    switch (message) {
+    case WM_SIZE:
+        if (pThis && pThis->m_webController) {
+            RECT bounds;
+            GetClientRect(hWnd, &bounds);
+            pThis->m_webController->put_Bounds(bounds);
+        }
+        return 0;
+    case WM_DESTROY:
+        PostQuitMessage(0);
+        return 0;
+    default:
+        return DefWindowProc(hWnd, message, wParam, lParam);
+    }
+}
+
+bool AppWindow::create(int width, int height, const std::wstring& title) {
+    HINSTANCE hInstance = GetModuleHandle(nullptr);
+
+    // Register Win32 Window Class
+    WNDCLASSEXW wcex = {};
+    wcex.cbSize = sizeof(WNDCLASSEX);
+    wcex.style = CS_HREDRAW | CS_VREDRAW;
+    wcex.lpfnWndProc = WndProc;
+    wcex.hInstance = hInstance;
+    wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
+    wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+    wcex.lpszClassName = L"RuneLauncherWindowClass";
+
+    if (!RegisterClassExW(&wcex)) {
+        std::cerr << "Failed to register window class." << std::endl;
+        return false;
+    }
+
+    // Create Window
+    m_hWnd = CreateWindowExW(
+        0, L"RuneLauncherWindowClass", title.c_str(),
+        WS_OVERLAPPEDWINDOW,
+        CW_USEDEFAULT, CW_USEDEFAULT, width, height,
+        nullptr, nullptr, hInstance, nullptr
+    );
+
+    if (!m_hWnd) {
+        std::cerr << "Failed to create window." << std::endl;
+        return false;
+    }
+
+    SetWindowLongPtr(m_hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
+
+    ShowWindow(m_hWnd, SW_SHOWNORMAL);
+    UpdateWindow(m_hWnd);
+
+    // Initialize WebView2
+    if (!initializeWebView()) {
+        std::cerr << "Failed to initialize WebView2." << std::endl;
+        return false;
+    }
+
+    return true;
+}
+
+void AppWindow::runMessageLoop() {
+    MSG msg;
+    while (GetMessage(&msg, nullptr, 0, 0)) {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+}
+
+bool AppWindow::initializeWebView() {
+    // Dynamically load WebView2Loader.dll at runtime to prevent OS startup link errors when distributed as a standalone EXE
+    HMODULE hLoader = LoadLibraryW(L"WebView2Loader.dll");
+    if (!hLoader) {
+        std::cerr << "Failed to load WebView2Loader.dll dynamically." << std::endl;
+        return false;
+    }
+
+    typedef HRESULT (STDAPICALLTYPE *CreateEnvWithOptionsFunc)(
+        PCWSTR browserExecutableFolder,
+        PCWSTR userDataFolder,
+        ICoreWebView2EnvironmentOptions* environmentOptions,
+        ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler* environmentCreatedHandler
+    );
+
+    auto pCreateEnv = (CreateEnvWithOptionsFunc)GetProcAddress(hLoader, "CreateCoreWebView2EnvironmentWithOptions");
+    if (!pCreateEnv) {
+        std::cerr << "Failed to locate CreateCoreWebView2EnvironmentWithOptions in WebView2Loader.dll." << std::endl;
+        FreeLibrary(hLoader);
+        return false;
+    }
+
+    HRESULT hr = pCreateEnv(
+        nullptr, nullptr, nullptr,
+        new EnvCompletedHandler(
+            [this, hLoader](HRESULT result, ICoreWebView2Environment* env) -> HRESULT {
+                if (FAILED(result)) {
+                    FreeLibrary(hLoader);
+                    return result;
+                }
+
+                env->CreateCoreWebView2Controller(
+                    m_hWnd,
+                    new ControllerCompletedHandler(
+                        [this, env, hLoader](HRESULT res, ICoreWebView2Controller* controller) -> HRESULT {
+                            if (FAILED(res)) {
+                                FreeLibrary(hLoader);
+                                return res;
+                            }
+
+                            m_webController = controller;
+                            m_webController->get_CoreWebView2(&m_webView);
+
+                            // Enable DevTools for debugging IPC connection
+                            Microsoft::WRL::ComPtr<ICoreWebView2Settings> settings;
+                            if (SUCCEEDED(m_webView->get_Settings(&settings))) {
+                                settings->put_AreDevToolsEnabled(TRUE);
+                            }
+
+                            // Resize WebView to fit parent client bounds
+                            RECT bounds;
+                            GetClientRect(m_hWnd, &bounds);
+                            m_webController->put_Bounds(bounds);
+
+                            // 3. Configure folder mapping & Navigate
+                            setupVirtualHostMapping();
+
+                            // 4. Set up JS message receivers
+                            registerBridgeCallbacks();
+
+                            // 5. Send profiles to UI
+                            syncProfilesToUI();
+
+                            // Keep hLoader active for the WebView lifetime
+                            return S_OK;
+                        }
+                    )
+                );
+                return S_OK;
+            }
+        )
+    );
+
+    return SUCCEEDED(hr);
+}
+
+void AppWindow::setupVirtualHostMapping() {
+    if (!m_webView) return;
+
+    // Get ICoreWebView2_3 interface for folder mapping
+    Microsoft::WRL::ComPtr<ICoreWebView2_3> webView3;
+    HRESULT hr = m_webView->QueryInterface(IID_ICoreWebView2_3, reinterpret_cast<void**>(webView3.GetAddressOf()));
+    if (SUCCEEDED(hr)) {
+        // Resolve absolute folder path for static files (e.g. ui/dist or AppData ui folder)
+        std::filesystem::path rootPath = m_profileManager.getProfilePath("Default").parent_path().parent_path();
+        std::filesystem::path uiPath = rootPath / "Launcher" / "ui";
+        if (!std::filesystem::exists(uiPath)) {
+            // Fallback for Development Mode (running out of the local source repo)
+            uiPath = rootPath / "ui" / "dist";
+        }
+        std::wstring uiPathStr = std::filesystem::absolute(uiPath).make_preferred().wstring();
+
+        // Map http://rune-launcher.app to ui/dist
+        webView3->SetVirtualHostNameToFolderMapping(
+            L"rune-launcher.app",
+            uiPathStr.c_str(),
+            COREWEBVIEW2_HOST_RESOURCE_ACCESS_KIND_ALLOW
+        );
+
+        // Revert to HTTP scheme to bypass certificate warnings on local mapping while keeping JSON parsing active
+        m_webView->Navigate(L"http://rune-launcher.app/index.html");
+    } else {
+        std::cerr << "Failed to query ICoreWebView2_3. Local mapping disabled." << std::endl;
+        // Fallback navigation
+        m_webView->Navigate(L"about:blank");
+    }
+}
+
+void AppWindow::registerBridgeCallbacks() {
+    if (!m_webView) return;
+
+    m_webView->add_WebMessageReceived(
+        new MessageReceivedHandler(
+            [this](ICoreWebView2* sender, ICoreWebView2WebMessageReceivedEventArgs* args) -> HRESULT {
+                LPWSTR messageRaw = nullptr;
+                // Use get_WebMessageAsJson to correctly parse object postMessages sent from React
+                if (SUCCEEDED(args->get_WebMessageAsJson(&messageRaw)) && messageRaw) {
+                    std::wstring wMsg(messageRaw);
+                    CoTaskMemFree(messageRaw);
+
+                    // Convert wide string to utf8 string
+                    int sizeNeeded = WideCharToMultiByte(CP_UTF8, 0, wMsg.c_str(), (int)wMsg.size(), nullptr, 0, nullptr, nullptr);
+                    std::string u8Msg(sizeNeeded, 0);
+                    WideCharToMultiByte(CP_UTF8, 0, wMsg.c_str(), (int)wMsg.size(), &u8Msg[0], sizeNeeded, nullptr, nullptr);
+
+                    handleWebMessage(u8Msg);
+                }
+                return S_OK;
+            }
+        ),
+        nullptr
+    );
+}
+
+void AppWindow::postEventToUI(const std::string& eventName, const std::string& jsonDetail) const {
+    if (!m_webView) return;
+
+    try {
+        // Wrap custom event and payload securely inside a single JSON object
+        nlohmann::json message = {
+            {"event", eventName},
+            {"detail", nlohmann::json::parse(jsonDetail)}
+        };
+        
+        std::string dump = message.dump();
+        int sizeNeeded = MultiByteToWideChar(CP_UTF8, 0, dump.c_str(), (int)dump.size(), nullptr, 0);
+        std::wstring wDump(sizeNeeded, 0);
+        MultiByteToWideChar(CP_UTF8, 0, dump.c_str(), (int)dump.size(), &wDump[0], sizeNeeded);
+
+        m_webView->PostWebMessageAsJson(wDump.c_str());
+    } catch (const std::exception& e) {
+        std::cerr << "Failed to post web message: " << e.what() << std::endl;
+    }
+}
+
+void AppWindow::handleWebMessage(const std::string& messageJson) {
+    std::cout << "[DEBUG] Received message from JS: " << messageJson << std::endl;
+    try {
+        auto msg = nlohmann::json::parse(messageJson);
+        std::string action = msg.at("action").get<std::string>();
+
+        if (action == "getProfiles") {
+            syncProfilesToUI();
+        } 
+        else if (action == "switchProfile") {
+            std::string profileName = msg.at("data").at("name").get<std::string>();
+            std::cout << "Switching profile to: " << profileName << std::endl;
+            // State updates inside launcher backend can be done here.
+            
+            // Re-sync after switch
+            syncProfilesToUI();
+        } 
+        else if (action == "launchGame") {
+            std::cout << "Triggering game launch..." << std::endl;
+            
+            // Asynchronously start launch sequence to avoid blocking the Win32 main thread
+            std::thread([this]() {
+                std::vector<std::string> errors;
+                std::string activeProfile = "Default"; // Simple default profile target for MVP
+                
+                postEventToUI("launchStatus", "{\"status\": \"resolving\"}");
+                
+                bool success = m_runner.run(activeProfile, L"Minecraft.Windows.exe");
+                if (success) {
+                    postEventToUI("launchStatus", "{\"status\": \"success\"}");
+                } else {
+                    postEventToUI("launchStatus", "{\"status\": \"failed\"}");
+                }
+            }).detach();
+        }
+        else if (action == "selectAndImportFile") {
+            // Native open file dialog (COM/Win32)
+            OPENFILENAMEW ofn = {};
+            wchar_t szFile[260] = { 0 };
+            ofn.lStructSize = sizeof(ofn);
+            ofn.hwndOwner = m_hWnd;
+            ofn.lpstrFile = szFile;
+            ofn.nMaxFile = sizeof(szFile) / sizeof(wchar_t);
+            ofn.lpstrFilter = L"Mod Files (*.dll;*.runemod)\0*.dll;*.runemod\0All Files (*.*)\0*.*\0";
+            ofn.nFilterIndex = 1;
+            ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+
+            if (GetOpenFileNameW(&ofn)) {
+                std::filesystem::path filePath(ofn.lpstrFile);
+                std::string activeProfile = "Default";
+                
+                std::cout << "Selected file: " << filePath.string() << std::endl;
+                bool success = m_importer.importFile(filePath, activeProfile);
+                
+                if (success) {
+                    postEventToUI("importStatus", "{\"status\": \"success\", \"message\": \"Mod imported successfully!\"}");
+                } else {
+                    postEventToUI("importStatus", "{\"status\": \"failed\", \"message\": \"Failed to validate or extract mod.\"}");
+                }
+                syncProfilesToUI();
+            }
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Failed to parse web message JSON: " << e.what() << std::endl;
+    }
+}
+
+void AppWindow::syncProfilesToUI() const {
+    std::cout << "[DEBUG] syncProfilesToUI called" << std::endl;
+    try {
+        auto profiles = m_profileManager.getProfiles();
+        std::string activeProfile = "Default"; // Default active for MVP
+        
+        std::filesystem::path profilePath = m_profileManager.getProfilePath(activeProfile);
+        std::filesystem::path modsPath = profilePath / "mods";
+        
+        nlohmann::json modsArray = nlohmann::json::array();
+        
+        if (std::filesystem::exists(modsPath)) {
+            for (const auto& entry : std::filesystem::directory_iterator(modsPath)) {
+                if (entry.is_directory()) {
+                    std::filesystem::path manifestPath = entry.path() / "manifest.json";
+                    if (std::filesystem::exists(manifestPath)) {
+                        std::ifstream manifestFile(manifestPath);
+                        if (manifestFile.is_open()) {
+                            nlohmann::json manifest;
+                            manifestFile >> manifest;
+                            
+                            nlohmann::json modInfo = {
+                                {"id", manifest.value("id", entry.path().filename().string())},
+                                {"name", manifest.value("name", entry.path().filename().string())},
+                                {"version", manifest.value("version", "1.0.0")},
+                                {"entrypoint", manifest.value("entrypoint", "")}
+                            };
+                            modsArray.push_back(modInfo);
+                        }
+                    }
+                }
+            }
+        }
+
+        nlohmann::json detail = {
+            {"profiles", profiles},
+            {"active", activeProfile},
+            {"mods", modsArray}
+        };
+        postEventToUI("profilesUpdated", detail.dump());
+    } catch (const std::exception& e) {
+        std::cerr << "Failed to sync profiles to UI: " << e.what() << std::endl;
+    }
+}
+
+} // namespace rune
