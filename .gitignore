@@ -13,6 +13,7 @@ out/
 *.a
 *.obj
 *.o
+*.runemod
 
 # Runtime profiles generated during execution
 profiles/

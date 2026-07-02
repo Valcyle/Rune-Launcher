@@ -14,6 +14,12 @@ set(SOURCES
     src/ZipUtility.cpp
     src/ModImporter.hpp
     src/ModImporter.cpp
+    src/DependencyResolver.hpp
+    src/DependencyResolver.cpp
+    src/Injector.hpp
+    src/Injector.cpp
+    src/InjectionRunner.hpp
+    src/InjectionRunner.cpp
 )
 
 add_executable(launcher ${SOURCES})
