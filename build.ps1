@@ -56,6 +56,9 @@ function Write-HexPayload([string]$filePath, [string]$varName) {
 # Embed WebView2Loader.dll
 Write-HexPayload "build_cmake/WebView2Loader.dll" "EMBEDDED_LOADER_DLL"
 
+# Embed RuneCore.dll
+Write-HexPayload "RuneCore.dll" "EMBEDDED_RUNE_CORE_DLL"
+
 # Embed UI files individually
 $uiFiles = Get-ChildItem -Path "ui/dist" -Recurse -File
 $fileList = New-Object System.Collections.Generic.List[PSObject]

@@ -17,4 +17,8 @@ extern const size_t EMBEDDED_UI_FILES_COUNT;
 extern const unsigned char EMBEDDED_LOADER_DLL[];
 extern const size_t EMBEDDED_LOADER_DLL_SIZE;
 
+// Packed bytes of RuneCore.dll
+extern const unsigned char EMBEDDED_RUNE_CORE_DLL[];
+extern const size_t EMBEDDED_RUNE_CORE_DLL_SIZE;
+
 } // namespace rune

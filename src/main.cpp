@@ -119,6 +119,9 @@ int main(int argc, char* argv[]) {
                     // Extract DLL next to the installed target
                     extractFile(launcherFolder / "WebView2Loader.dll", rune::EMBEDDED_LOADER_DLL, rune::EMBEDDED_LOADER_DLL_SIZE);
 
+                    // Extract RuneCore.dll to rootPath for the InjectionRunner
+                    extractFile(rootPath / "RuneCore.dll", rune::EMBEDDED_RUNE_CORE_DLL, rune::EMBEDDED_RUNE_CORE_DLL_SIZE);
+
                     // Extract all UI static files
                     for (size_t i = 0; i < rune::EMBEDDED_UI_FILES_COUNT; ++i) {
                         const auto& uiFile = rune::EMBEDDED_UI_FILES[i];
@@ -151,6 +154,9 @@ int main(int argc, char* argv[]) {
                 if (!std::filesystem::exists(dllPath)) {
                     extractFile(dllPath, rune::EMBEDDED_LOADER_DLL, rune::EMBEDDED_LOADER_DLL_SIZE);
                 }
+                // Unpack RuneCore.dll on startup for update consistency
+                extractFile(rootPath / "RuneCore.dll", rune::EMBEDDED_RUNE_CORE_DLL, rune::EMBEDDED_RUNE_CORE_DLL_SIZE);
+
                 for (size_t i = 0; i < rune::EMBEDDED_UI_FILES_COUNT; ++i) {
                     const auto& uiFile = rune::EMBEDDED_UI_FILES[i];
                     std::filesystem::path fileDest = launcherFolder / "ui" / uiFile.relativePath;
