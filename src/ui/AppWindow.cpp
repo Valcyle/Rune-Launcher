@@ -1,4 +1,5 @@
 #include "ui/AppWindow.hpp"
+#include "discord/DiscordRPC.hpp"
 #include <windowsx.h>
 #include <dwmapi.h>
 #include <nlohmann/json.hpp>
@@ -255,6 +256,9 @@ bool AppWindow::initializeWebView() {
                             // 5. Send profiles to UI
                             syncProfilesToUI();
 
+                            // Update initial Discord Rich Presence
+                            DiscordRPC::getInstance().updateActivity("Profile: Default", "Browsing Mods", false);
+
                             // Keep hLoader active for the WebView lifetime
                             return S_OK;
                         }
@@ -377,6 +381,9 @@ void AppWindow::handleWebMessage(const std::string& messageJson) {
             std::cout << "Switching profile to: " << profileName << std::endl;
             // State updates inside launcher backend can be done here.
             
+            // Update Discord Rich Presence
+            DiscordRPC::getInstance().updateActivity("Profile: " + profileName, "Browsing Mods", false);
+
             // Re-sync after switch
             syncProfilesToUI();
         } 
@@ -390,11 +397,16 @@ void AppWindow::handleWebMessage(const std::string& messageJson) {
                 
                 postEventToUI("launchStatus", "{\"status\": \"resolving\"}");
                 
+                // Update Rich Presence to "Playing Minecraft" during gameplay
+                DiscordRPC::getInstance().updateActivity("Profile: " + activeProfile, "Playing Minecraft", true);
+                
                 bool success = m_runner.run(activeProfile, L"Minecraft.Windows.exe");
                 if (success) {
                     postEventToUI("launchStatus", "{\"status\": \"success\"}");
                 } else {
                     postEventToUI("launchStatus", "{\"status\": \"failed\"}");
+                    // Revert back to Browsing on failure
+                    DiscordRPC::getInstance().updateActivity("Profile: " + activeProfile, "Browsing Mods", false);
                 }
             }).detach();
         }

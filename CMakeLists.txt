@@ -8,6 +8,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Source files
 set(SOURCES
     src/main.cpp
+    src/discord/DiscordRPC.hpp
+    src/discord/DiscordRPC.cpp
     src/profile/ProfileManager.hpp
     src/profile/ProfileManager.cpp
     src/profile/ZipUtility.hpp
@@ -24,6 +26,8 @@ set(SOURCES
     src/ui/AppWindow.cpp
     src/ui/GeneratedResources.hpp
     src/ui/GeneratedResources.cpp
+    src/ui/Logger.hpp
+    src/ui/Logger.cpp
 )
 
 add_executable(launcher ${SOURCES})

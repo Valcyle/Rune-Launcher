@@ -4,6 +4,7 @@
 #include "injection/InjectionRunner.hpp"
 #include "ui/AppWindow.hpp"
 #include "ui/GeneratedResources.hpp"
+#include "discord/DiscordRPC.hpp"
 #include <iostream>
 #include <fstream>
 #include <shlobj.h>
@@ -46,6 +47,7 @@ bool extractFile(const std::filesystem::path& destPath, const unsigned char* dat
 }
 
 int main(int argc, char* argv[]) {
+    bool isDevMode = false;
     try {
         // 1. Resolve run environment and paths
         std::filesystem::path exePath = std::filesystem::absolute(argv[0]);
@@ -56,7 +58,6 @@ int main(int argc, char* argv[]) {
         }
 
         // Detect Dev Mode safely without entering recursive root parent loops
-        bool isDevMode = false;
         std::filesystem::path devRoot = exePath.parent_path();
         if (std::filesystem::exists(devRoot / "CMakeLists.txt") || std::filesystem::exists(devRoot / "build.ps1")) {
             isDevMode = true;
@@ -78,6 +79,13 @@ int main(int argc, char* argv[]) {
         }
 
         if (isDevMode) {
+            // Allocate a console window for debug mode on Windows GUI applications
+            AllocConsole();
+            FILE* fDummy;
+            freopen_s(&fDummy, "CONOUT$", "w", stdout);
+            freopen_s(&fDummy, "CONOUT$", "w", stderr);
+            std::cout << "[System] Debug console allocated for Development Mode." << std::endl;
+
             rootPath = devRoot;
             launcherFolder = exePath.parent_path();
             // In Dev Mode, ensure WebView2Loader.dll is present next to the exe
@@ -169,6 +177,9 @@ int main(int argc, char* argv[]) {
         rune::ProfileManager pm(rootPath);
         pm.initialize();
 
+        // Initialize Discord Rich Presence with Client ID
+        rune::DiscordRPC::getInstance().initialize("1522358629704138913");
+
         rune::ModImporter importer(pm);
         rune::DependencyResolver resolver(pm);
         rune::InjectionRunner runner(pm, resolver);
@@ -187,6 +198,8 @@ int main(int argc, char* argv[]) {
                 bool success = importer.importFile(fileToImport, activeProfile);
                 std::cout << (success ? "Import SUCCEEDED." : "Import FAILED.") << std::endl;
                 if (!success) {
+                    rune::DiscordRPC::getInstance().shutdown();
+                    if (isDevMode) FreeConsole();
                     CoUninitialize();
                     return 1;
                 }
@@ -210,6 +223,8 @@ int main(int argc, char* argv[]) {
                     std::cout << "Injection sequence COMPLETED successfully." << std::endl;
                 } else {
                     std::cerr << "Injection sequence FAILED." << std::endl;
+                    rune::DiscordRPC::getInstance().shutdown();
+                    if (isDevMode) FreeConsole();
                     CoUninitialize();
                     return 1;
                 }
@@ -223,9 +238,13 @@ int main(int argc, char* argv[]) {
                 }
             }
         }
+        rune::DiscordRPC::getInstance().shutdown();
+        if (isDevMode) FreeConsole();
         CoUninitialize();
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
+        rune::DiscordRPC::getInstance().shutdown();
+        if (isDevMode) FreeConsole();
         CoUninitialize();
         return 1;
     }

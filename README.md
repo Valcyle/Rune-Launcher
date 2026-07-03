@@ -8,6 +8,7 @@ RuneLauncher is a native, high-performance, multi-profile launcher for `RuneModL
 - **Dependency Resolver**: Full dependency checking supporting semantic versioning operators (`>=` and `^`).
 - **Sequential Injector**: Performs native process discovery and injects mod loader cores and libraries in a strict sequential order.
 - **Single-EXE Packaging**: Embeds all frontend assets, supporting DLLs, and loader cores directly inside the executable.
+- **Discord Rich Presence (RPC)**: Integrated lightweight, native Named Pipe IPC connection showcasing your active modding profile and gameplay status directly on Discord.
 
 ---
 
