@@ -30,4 +30,21 @@ std::filesystem::path ProfileManager::getProfilePath(const std::string& profileN
     return m_profilesPath / profileName;
 }
 
+bool ProfileManager::createProfile(const std::string& profileName) const {
+    if (profileName.empty()) return false;
+
+    std::filesystem::path targetPath = m_profilesPath / profileName;
+    if (std::filesystem::exists(targetPath)) {
+        return false; // Profile already exists
+    }
+
+    try {
+        std::filesystem::create_directories(targetPath / "external");
+        std::filesystem::create_directories(targetPath / "mods");
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
+
 } // namespace rune

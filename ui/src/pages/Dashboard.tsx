@@ -21,6 +21,8 @@ interface DashboardProps {
   modsList: ModInfo[];
   externalsList: ExternalInfo[];
   handleProfileChange: (name: string) => void;
+  handleCreateProfile: (name: string) => void;
+  handleOpenProfileFolder: () => void;
   handleLaunch: () => void;
   handleImportClick: () => void;
   theme: 'dark' | 'light';
@@ -35,12 +37,39 @@ export default function Dashboard({
   modsList,
   externalsList,
   handleProfileChange,
+  handleCreateProfile,
+  handleOpenProfileFolder,
   handleLaunch,
   handleImportClick,
   theme,
   colors
 }: DashboardProps) {
   const [hovered, setHovered] = useState<string | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newProfileName, setNewProfileName] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const handleCreateSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage('');
+    
+    const trimmed = newProfileName.trim();
+    if (!trimmed) {
+      setErrorMessage('Profile name cannot be empty.');
+      return;
+    }
+
+    // Validate name: alphanumeric, dashes, underscores
+    const validRegex = /^[a-zA-Z0-9_-]+$/;
+    if (!validRegex.test(trimmed)) {
+      setErrorMessage('Invalid name. Only letters, numbers, dash (-), and underscore (_) are allowed.');
+      return;
+    }
+
+    handleCreateProfile(trimmed);
+    setNewProfileName('');
+    setShowCreateModal(false);
+  };
 
   return (
     <>
@@ -63,29 +92,86 @@ export default function Dashboard({
  
         {/* Profile Picker & Action */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <select
-            value={activeProfile}
-            onChange={(e) => handleProfileChange(e.target.value)}
-            style={{
-              padding: '8px 14px',
-              borderRadius: '6px',
-              border: `1px solid ${colors.border}`,
-              background: colors.surface,
-              color: colors.text,
-              fontSize: '13px',
-              fontWeight: 600,
-              outline: 'none',
-              cursor: 'pointer'
-            }}
-          >
-            {profiles.length > 0 ? (
-              profiles.map((p) => (
-                <option key={p} value={p}>{p}</option>
-              ))
-            ) : (
-              <option value="Default">Default</option>
-            )}
-          </select>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <select
+              value={activeProfile}
+              onChange={(e) => handleProfileChange(e.target.value)}
+              style={{
+                padding: '8px 14px',
+                borderRadius: '6px',
+                border: `1px solid ${colors.border}`,
+                background: colors.surface,
+                color: colors.text,
+                fontSize: '13px',
+                fontWeight: 600,
+                outline: 'none',
+                cursor: 'pointer'
+              }}
+            >
+              {profiles.length > 0 ? (
+                profiles.map((p) => (
+                  <option key={p} value={p}>{p}</option>
+                ))
+              ) : (
+                <option value="Default">Default</option>
+              )}
+            </select>
+
+            <button
+              onClick={() => setShowCreateModal(true)}
+              onMouseEnter={() => setHovered('createBtn')}
+              onMouseLeave={() => setHovered(null)}
+              style={{
+                background: colors.surface,
+                border: `1px solid ${colors.border}`,
+                color: colors.text,
+                padding: '8px 12px',
+                height: '37px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.2s',
+                backgroundColor: hovered === 'createBtn' ? colors.panel : colors.surface,
+                outline: 'none',
+                boxSizing: 'border-box'
+              }}
+              title="Create New Profile"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+            </button>
+
+            <button
+              onClick={handleOpenProfileFolder}
+              onMouseEnter={() => setHovered('openFolderBtn')}
+              onMouseLeave={() => setHovered(null)}
+              style={{
+                background: colors.surface,
+                border: `1px solid ${colors.border}`,
+                color: colors.text,
+                padding: '8px 12px',
+                height: '37px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.2s',
+                backgroundColor: hovered === 'openFolderBtn' ? colors.panel : colors.surface,
+                outline: 'none',
+                boxSizing: 'border-box'
+              }}
+              title="Open Profile Folder"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+              </svg>
+            </button>
+          </div>
  
           <button
             onClick={handleLaunch}
@@ -297,6 +383,105 @@ export default function Dashboard({
           )}
         </div>
       </div>
+
+      {/* Create Profile Modal */}
+      {showCreateModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: 'rgba(0, 0, 0, 0.65)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000,
+          backdropFilter: 'blur(4px)'
+        }}>
+          <form onSubmit={handleCreateSubmit} style={{
+            backgroundColor: colors.surface,
+            border: `1px solid ${colors.border}`,
+            borderRadius: '16px',
+            width: '380px',
+            padding: '28px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '20px',
+            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.3)'
+          }}>
+            <div>
+              <h3 style={{ margin: '0 0 6px 0', fontSize: '18px', fontWeight: 700, color: colors.text }}>Create Profile</h3>
+              <p style={{ margin: 0, color: colors.textMuted, fontSize: '13px' }}>Enter a name for the new modding environment.</p>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <input
+                type="text"
+                placeholder="e.g. Modded-1.20"
+                value={newProfileName}
+                onChange={(e) => {
+                  setNewProfileName(e.target.value);
+                  setErrorMessage('');
+                }}
+                autoFocus
+                style={{
+                  padding: '10px 14px',
+                  borderRadius: '6px',
+                  border: `1px solid ${colors.border}`,
+                  background: colors.panel,
+                  color: colors.text,
+                  fontSize: '13px',
+                  outline: 'none',
+                  width: '100%',
+                  boxSizing: 'border-box'
+                }}
+              />
+              {errorMessage && (
+                <span style={{ fontSize: '11px', color: '#ef4444' }}>{errorMessage}</span>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowCreateModal(false);
+                  setNewProfileName('');
+                  setErrorMessage('');
+                }}
+                style={{
+                  background: 'transparent',
+                  border: `1px solid ${colors.border}`,
+                  color: colors.text,
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  fontSize: '13px'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                style={{
+                  backgroundColor: colors.glowGreen,
+                  color: '#ffffff',
+                  border: 'none',
+                  padding: '8px 20px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                  fontSize: '13px'
+                }}
+              >
+                Create
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </>
   );
 }

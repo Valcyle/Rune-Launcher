@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <thread>
 #include <urlmon.h>
+#include <shellapi.h>
 
 #pragma comment(lib, "urlmon.lib")
 
@@ -399,21 +400,50 @@ void AppWindow::handleWebMessage(const std::string& messageJson) {
         else if (action == "switchProfile") {
             std::string profileName = msg.at("data").at("name").get<std::string>();
             std::cout << "Switching profile to: " << profileName << std::endl;
-            // State updates inside launcher backend can be done here.
+            m_activeProfile = profileName;
             
             // Update Discord Rich Presence
-            DiscordRPC::getInstance().updateActivity("Profile: " + profileName, "Browsing Mods", false);
+            DiscordRPC::getInstance().updateActivity("Profile: " + m_activeProfile, "Browsing Mods", false);
 
             // Re-sync after switch
             syncProfilesToUI();
         } 
+        else if (action == "createProfile") {
+            std::string profileName = msg.at("data").at("name").get<std::string>();
+            std::cout << "Attempting to create profile: " << profileName << std::endl;
+            
+            bool success = m_profileManager.createProfile(profileName);
+            if (success) {
+                m_activeProfile = profileName;
+                nlohmann::json response = {
+                    {"status", "success"},
+                    {"message", "Profile '" + profileName + "' created successfully!"}
+                };
+                postEventToUI("createProfileStatus", response.dump());
+                
+                // Update Discord RPC
+                DiscordRPC::getInstance().updateActivity("Profile: " + m_activeProfile, "Browsing Mods", false);
+                syncProfilesToUI();
+            } else {
+                nlohmann::json response = {
+                    {"status", "failed"},
+                    {"message", "Failed to create profile. It might already exist."}
+                };
+                postEventToUI("createProfileStatus", response.dump());
+            }
+        } 
+        else if (action == "openProfileFolder") {
+            std::filesystem::path profilePath = m_profileManager.getProfilePath(m_activeProfile);
+            std::cout << "[System] Opening profile folder: " << profilePath.string() << std::endl;
+            ShellExecuteW(nullptr, L"open", profilePath.wstring().c_str(), nullptr, nullptr, SW_SHOWDEFAULT);
+        }
         else if (action == "launchGame") {
             std::cout << "Triggering game launch..." << std::endl;
             
             // Asynchronously start launch sequence to avoid blocking the Win32 main thread
             std::thread([this]() {
                 std::vector<std::string> errors;
-                std::string activeProfile = "Default"; // Simple default profile target for MVP
+                std::string activeProfile = m_activeProfile;
                 
                 postEventToUI("launchStatus", "{\"status\": \"resolving\"}");
                 
@@ -466,7 +496,7 @@ void AppWindow::syncProfilesToUI() const {
     std::cout << "[DEBUG] syncProfilesToUI called" << std::endl;
     try {
         auto profiles = m_profileManager.getProfiles();
-        std::string activeProfile = "Default"; // Default active for MVP
+        std::string activeProfile = m_activeProfile;
         
         std::filesystem::path profilePath = m_profileManager.getProfilePath(activeProfile);
         std::filesystem::path modsPath = profilePath / "mods";

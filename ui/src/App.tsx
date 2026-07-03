@@ -188,6 +188,9 @@ export default function App() {
               showToast('Automatic update failed to download or install.', 'error');
               setUpdateProcessStatus('idle');
             }
+          } else if (event === 'createProfileStatus') {
+            const { status, message } = detail;
+            showToast(message, status === 'success' ? 'success' : 'error');
           }
         }
       } catch (err) {
@@ -237,6 +240,14 @@ export default function App() {
 
   const handleImportClick = () => {
     sendMessageToHost({ action: 'selectAndImportFile' });
+  };
+
+  const handleCreateProfile = (name: string) => {
+    sendMessageToHost({ action: 'createProfile', data: { name } });
+  };
+
+  const handleOpenProfileFolder = () => {
+    sendMessageToHost({ action: 'openProfileFolder' });
   };
 
   // Color mappings
@@ -313,6 +324,8 @@ export default function App() {
               modsList={modsList}
               externalsList={externalsList}
               handleProfileChange={handleProfileChange}
+              handleCreateProfile={handleCreateProfile}
+              handleOpenProfileFolder={handleOpenProfileFolder}
               handleLaunch={handleLaunch}
               handleImportClick={handleImportClick}
               theme={theme}

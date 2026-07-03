@@ -37,6 +37,13 @@ public:
      */
     std::filesystem::path getProfilePath(const std::string& profileName) const;
 
+    /**
+     * @brief Dynamically creates a new profile directory and subfolders if it doesn't already exist.
+     * @param profileName The name of the profile.
+     * @return true if successfully created, false if it already exists or path validation fails.
+     */
+    bool createProfile(const std::string& profileName) const;
+
 private:
     std::filesystem::path m_rootPath;
     std::filesystem::path m_profilesPath;
