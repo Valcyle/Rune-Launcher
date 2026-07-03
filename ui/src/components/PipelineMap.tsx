@@ -9,12 +9,12 @@ export default function PipelineMap({ launchStatus, colors }: PipelineMapProps) 
     <div style={{
       backgroundColor: colors.surface,
       border: `1px solid ${colors.border}`,
-      borderRadius: '16px',
-      padding: '30px',
+      borderRadius: '8px',
+      padding: '24px 30px',
       boxShadow: colors.shadow
     }}>
       <h3 style={{
-        fontSize: '14px',
+        fontSize: '12px',
         fontWeight: 700,
         margin: '0 0 20px 0',
         textTransform: 'uppercase',
@@ -47,16 +47,16 @@ export default function PipelineMap({ launchStatus, colors }: PipelineMapProps) 
         {/* Node 1: RuneCore.dll */}
         <div style={{ zIndex: 2, textAlign: 'center', width: '120px' }}>
           <div style={{
-            width: '36px',
-            height: '36px',
-            borderRadius: '50%',
+            width: '32px',
+            height: '32px',
+            borderRadius: '6px',
             backgroundColor: colors.panel,
-            border: `2px solid ${colors.glowGreen}`,
+            border: `1.5px solid ${colors.glowGreen}`,
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
             fontWeight: 700,
-            fontSize: '13px',
+            fontSize: '12px',
             marginBottom: '8px',
             color: colors.text
           }}>
@@ -69,16 +69,16 @@ export default function PipelineMap({ launchStatus, colors }: PipelineMapProps) 
         {/* Node 2: External Client DLLs */}
         <div style={{ zIndex: 2, textAlign: 'center', width: '120px' }}>
           <div style={{
-            width: '36px',
-            height: '36px',
-            borderRadius: '50%',
+            width: '32px',
+            height: '32px',
+            borderRadius: '6px',
             backgroundColor: colors.panel,
-            border: `2px solid ${colors.glowPurple}`,
+            border: `1.5px solid ${colors.glowPurple}`,
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
             fontWeight: 700,
-            fontSize: '13px',
+            fontSize: '12px',
             marginBottom: '8px',
             color: colors.text
           }}>
@@ -91,16 +91,16 @@ export default function PipelineMap({ launchStatus, colors }: PipelineMapProps) 
         {/* Node 3: Profiles Mod Packages */}
         <div style={{ zIndex: 2, textAlign: 'center', width: '120px' }}>
           <div style={{
-            width: '36px',
-            height: '36px',
-            borderRadius: '50%',
+            width: '32px',
+            height: '32px',
+            borderRadius: '6px',
             backgroundColor: colors.panel,
-            border: `2px solid ${colors.border}`,
+            border: `1.5px solid ${colors.border}`,
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
             fontWeight: 700,
-            fontSize: '13px',
+            fontSize: '12px',
             marginBottom: '8px',
             color: colors.text
           }}>

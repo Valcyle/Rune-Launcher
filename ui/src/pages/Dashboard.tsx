@@ -49,12 +49,10 @@ export default function Dashboard({
         <div>
           <h1 style={{
             fontSize: '28px',
-            fontWeight: 900,
+            fontWeight: 800,
             margin: '0 0 6px 0',
-            letterSpacing: '-0.3px',
-            background: 'linear-gradient(135deg, #10b981 0%, #8b5cf6 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent'
+            letterSpacing: '-0.8px',
+            color: colors.text
           }}>
             Rune Launcher
           </h1>
@@ -62,19 +60,19 @@ export default function Dashboard({
             Isolated process loader pipeline & multi-client coordinator
           </p>
         </div>
-
+ 
         {/* Profile Picker & Action */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <select
             value={activeProfile}
             onChange={(e) => handleProfileChange(e.target.value)}
             style={{
-              padding: '10px 16px',
-              borderRadius: '10px',
+              padding: '8px 14px',
+              borderRadius: '6px',
               border: `1px solid ${colors.border}`,
               background: colors.surface,
               color: colors.text,
-              fontSize: '13.5px',
+              fontSize: '13px',
               fontWeight: 600,
               outline: 'none',
               cursor: 'pointer'
@@ -88,27 +86,25 @@ export default function Dashboard({
               <option value="Default">Default</option>
             )}
           </select>
-
+ 
           <button
             onClick={handleLaunch}
             onMouseEnter={() => setHovered('launch')}
             onMouseLeave={() => setHovered(null)}
             disabled={launchStatus === 'resolving'}
             style={{
-              padding: '11px 24px',
-              borderRadius: '10px',
+              padding: '9px 20px',
+              borderRadius: '6px',
               border: 'none',
               fontWeight: 700,
-              fontSize: '14.5px',
+              fontSize: '13.5px',
               cursor: launchStatus === 'resolving' ? 'not-allowed' : 'pointer',
-              background: launchStatus === 'resolving' ? '#4b5563' : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+              background: launchStatus === 'resolving' ? '#4b5563' : hovered === 'launch' ? '#059669' : colors.glowGreen,
               color: '#fff',
-              boxShadow: hovered === 'launch' && launchStatus !== 'resolving' ? '0 4px 15px rgba(16, 185, 129, 0.25)' : 'none',
-              transform: hovered === 'launch' && launchStatus !== 'resolving' ? 'translateY(-1px)' : 'none',
-              transition: 'all 0.2s',
+              transition: 'background 0.15s ease',
               display: 'flex',
               alignItems: 'center',
-              gap: '10px',
+              gap: '6px',
               outline: 'none'
             }}
           >
@@ -118,7 +114,12 @@ export default function Dashboard({
                 <span>SCANNING PROCESS...</span>
               </>
             ) : (
-              <span>Launch</span>
+              <>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+                <span>Launch</span>
+              </>
             )}
           </button>
         </div>
@@ -131,7 +132,7 @@ export default function Dashboard({
       {launchStatus !== 'idle' && (
         <div style={{
           padding: '16px 24px',
-          borderRadius: '12px',
+          borderRadius: '6px',
           fontSize: '14px',
           fontWeight: 600,
           backgroundColor: launchStatus === 'resolving' ? 'rgba(16, 185, 129, 0.08)' : launchStatus === 'success' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
@@ -165,13 +166,13 @@ export default function Dashboard({
         <div style={{
           backgroundColor: colors.surface,
           border: `1px solid ${colors.border}`,
-          borderRadius: '16px',
+          borderRadius: '8px',
           padding: '24px',
           display: 'flex',
           flexDirection: 'column',
           gap: '20px'
         }}>
-          <h3 style={{ fontSize: '15px', fontWeight: 700, margin: 0, color: colors.text }}>Profile Dependencies</h3>
+          <h3 style={{ fontSize: '14px', fontWeight: 700, margin: 0, color: colors.text }}>Profile Dependencies</h3>
 
           {/* Section 1: Client DLLs (externals) */}
           <div>
@@ -184,7 +185,7 @@ export default function Dashboard({
                   <div key={ext.path} style={{
                     padding: '10px 14px',
                     backgroundColor: colors.panel,
-                    borderRadius: '8px',
+                    borderRadius: '4px',
                     border: `1px solid ${colors.border}`,
                     display: 'flex',
                     justifyContent: 'space-between',
@@ -196,7 +197,7 @@ export default function Dashboard({
                   </div>
                 ))
               ) : (
-                <div style={{ padding: '16px', textAlign: 'center', color: colors.textMuted, fontSize: '12px', border: `1px dashed ${colors.border}`, borderRadius: '8px' }}>
+                <div style={{ padding: '16px', textAlign: 'center', color: colors.textMuted, fontSize: '12px', border: `1px dashed ${colors.border}`, borderRadius: '6px' }}>
                   No custom client DLLs loaded.
                 </div>
               )}
@@ -214,7 +215,7 @@ export default function Dashboard({
                   <div key={m.id} style={{
                     padding: '14px',
                     backgroundColor: colors.panel,
-                    borderRadius: '10px',
+                    borderRadius: '4px',
                     border: `1px solid ${colors.border}`,
                     display: 'flex',
                     flexDirection: 'column',
@@ -222,7 +223,7 @@ export default function Dashboard({
                   }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontWeight: 700, fontSize: '13.5px', color: colors.text }}>{m.name}</span>
-                      <span style={{ fontSize: '11px', color: colors.glowGreen, backgroundColor: theme === 'dark' ? 'rgba(16,185,129,0.08)' : '#e6fbf2', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>v{m.version}</span>
+                      <span style={{ fontSize: '11px', color: colors.glowGreen, backgroundColor: theme === 'dark' ? 'rgba(16,185,129,0.08)' : '#e6fbf2', padding: '2px 8px', borderRadius: '2px', fontWeight: 600 }}>v{m.version}</span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: colors.textMuted }}>
                       <span>Target DLL: `{m.entrypoint}`</span>
@@ -231,7 +232,7 @@ export default function Dashboard({
                   </div>
                 ))
               ) : (
-                <div style={{ padding: '16px', textAlign: 'center', color: colors.textMuted, fontSize: '12px', border: `1px dashed ${colors.border}`, borderRadius: '8px' }}>
+                <div style={{ padding: '16px', textAlign: 'center', color: colors.textMuted, fontSize: '12px', border: `1px dashed ${colors.border}`, borderRadius: '6px' }}>
                   No active mods found in this profile.
                 </div>
               )}
@@ -243,14 +244,14 @@ export default function Dashboard({
         <div style={{
           backgroundColor: colors.surface,
           border: `1px solid ${colors.border}`,
-          borderRadius: '16px',
+          borderRadius: '8px',
           padding: '24px',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between'
         }}>
           <div>
-            <h3 style={{ fontSize: '15px', fontWeight: 700, margin: '0 0 4px 0', color: colors.text }}>Import Mod</h3>
+            <h3 style={{ fontSize: '14px', fontWeight: 700, margin: '0 0 4px 0', color: colors.text }}>Import Mod</h3>
             <p style={{ fontSize: '12px', color: colors.textMuted, margin: '0 0 20px 0' }}>
               Select DLL or .runemod files to add to active profile
             </p>
@@ -262,15 +263,19 @@ export default function Dashboard({
             onMouseLeave={() => setHovered(null)}
             style={{
               border: `1.5px dashed ${hovered === 'import' ? colors.glowGreen : colors.border}`,
-              backgroundColor: colors.panel,
-              borderRadius: '12px',
+              backgroundColor: hovered === 'import' ? (theme === 'dark' ? 'rgba(16, 185, 129, 0.04)' : '#f0fdf4') : colors.panel,
+              borderRadius: '6px',
               padding: '36px 12px',
               textAlign: 'center',
               cursor: 'pointer',
               transition: 'all 0.2s ease',
             }}
           >
-            <span style={{ fontSize: '32px', display: 'block', marginBottom: '8px' }}>📥</span>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" style={{ display: 'inline-block', marginBottom: '8px', color: hovered === 'import' ? colors.glowGreen : colors.textMuted }}>
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
             <span style={{ fontSize: '13px', fontWeight: 700, color: colors.text, display: 'block' }}>Choose DLL or Package</span>
             <span style={{ fontSize: '10.5px', color: colors.textMuted }}>Resolves dependencies dynamically</span>
           </div>
@@ -279,7 +284,7 @@ export default function Dashboard({
             <div style={{
               marginTop: '16px',
               padding: '10px',
-              borderRadius: '8px',
+              borderRadius: '6px',
               fontSize: '12px',
               fontWeight: 600,
               textAlign: 'center',

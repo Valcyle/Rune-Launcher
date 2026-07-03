@@ -23,26 +23,27 @@ export default function Sidebar({ activeTab, setActiveTab, theme, setTheme, colo
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', alignItems: 'center' }}>
         {/* Logo */}
         <div style={{
-          width: '40px',
-          height: '40px',
-          borderRadius: '50%',
-          background: 'linear-gradient(135deg, #10b981 0%, #8b5cf6 100%)',
-          padding: '2px',
+          width: '36px',
+          height: '36px',
+          borderRadius: '6px',
+          border: `1px solid ${colors.border}`,
+          backgroundColor: colors.panel,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           cursor: 'pointer'
         }}>
           <div style={{
-            width: '100%',
-            height: '100%',
+            width: '28px',
+            height: '28px',
             backgroundColor: colors.surface,
-            borderRadius: '50%',
+            border: `1px solid ${colors.border}`,
+            borderRadius: '5px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontWeight: 800,
-            fontSize: '16px',
+            fontWeight: 700,
+            fontSize: '14px',
             color: colors.text
           }}>
             R
@@ -57,13 +58,13 @@ export default function Sidebar({ activeTab, setActiveTab, theme, setTheme, colo
             border: 'none',
             width: '42px',
             height: '42px',
-            borderRadius: '10px',
+            borderRadius: '6px',
             color: activeTab === 'launcher' ? colors.glowGreen : colors.textMuted,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             cursor: 'pointer',
-            transition: 'all 0.2s',
+            transition: 'all 0.15s ease',
             backgroundColor: activeTab === 'launcher' ? (theme === 'dark' ? 'rgba(16,185,129,0.06)' : 'rgba(16,185,129,0.04)') : 'transparent'
           }}
           title="Pipeline Dashboard"
@@ -84,13 +85,13 @@ export default function Sidebar({ activeTab, setActiveTab, theme, setTheme, colo
             border: 'none',
             width: '42px',
             height: '42px',
-            borderRadius: '10px',
+            borderRadius: '6px',
             color: activeTab === 'profiles' ? colors.glowGreen : colors.textMuted,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             cursor: 'pointer',
-            transition: 'all 0.2s',
+            transition: 'all 0.15s ease',
             backgroundColor: activeTab === 'profiles' ? (theme === 'dark' ? 'rgba(16,185,129,0.06)' : 'rgba(16,185,129,0.04)') : 'transparent'
           }}
           title="Profile Configuration"

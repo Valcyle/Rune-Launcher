@@ -21,6 +21,12 @@ export default function TitleBar({ theme, colors, sendMessageToHost }: TitleBarP
     sendMessageToHost({ action: 'closeWindow' });
   };
 
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (e.button === 0) {
+      sendMessageToHost({ action: 'dragWindow' });
+    }
+  };
+
   const isDark = theme === 'dark';
 
   return (
@@ -42,6 +48,7 @@ export default function TitleBar({ theme, colors, sendMessageToHost }: TitleBarP
       {/* Draggable Title Area */}
       <div 
         className="titlebar-drag-region"
+        onMouseDown={handleMouseDown}
         style={{
           display: 'flex',
           alignItems: 'center',

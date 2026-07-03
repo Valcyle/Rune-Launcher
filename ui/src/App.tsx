@@ -116,17 +116,17 @@ export default function App() {
   // Color mappings
   const isDark = theme === 'dark';
   const colors = {
-    bg: isDark ? '#0a0a0f' : '#f8fafc',
-    surface: isDark ? '#12121a' : '#ffffff',
-    panel: isDark ? '#181824' : '#f1f5f9',
-    border: isDark ? 'rgba(255,255,255,0.05)' : '#e2e8f0',
-    text: isDark ? '#f1f5f9' : '#0f172a',
-    textMuted: isDark ? '#94a3b8' : '#64748b',
+    bg: isDark ? '#0e0f12' : '#f1f3f5',
+    surface: isDark ? '#15171e' : '#ffffff',
+    panel: isDark ? '#1b1e26' : '#f8fafc',
+    border: isDark ? '#242835' : '#e4e4e7',
+    text: isDark ? '#e3e3e6' : '#18181b',
+    textMuted: isDark ? '#8c8c93' : '#71717a',
     glowGreen: '#10b981',
-    glowPurple: '#a855f7',
-    sidebarBg: isDark ? '#141419' : '#ffffff',
-    sidebarActiveBg: isDark ? '#22222b' : '#e2e8f0',
-    shadow: isDark ? 'none' : '0 4px 20px rgba(0, 0, 0, 0.015)'
+    glowPurple: '#8b5cf6',
+    sidebarBg: isDark ? '#121318' : '#ffffff',
+    sidebarActiveBg: isDark ? '#20232c' : '#e4e4e7',
+    shadow: isDark ? 'none' : '0 1px 3px rgba(0, 0, 0, 0.05)'
   };
 
   return (
