@@ -33,7 +33,7 @@ set(SOURCES
     src/ui/Logger.cpp
 )
 
-add_executable(launcher ${SOURCES})
+add_executable(launcher ${SOURCES} app.rc)
 
 # WebView2 SDK Auto-Download Setup
 set(WEBVIEW2_VERSION "1.0.1264.42")
