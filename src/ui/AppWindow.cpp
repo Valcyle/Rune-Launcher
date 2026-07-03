@@ -360,6 +360,10 @@ void AppWindow::handleWebMessage(const std::string& messageJson) {
         if (action == "minimizeWindow") {
             ShowWindow(m_hWnd, SW_MINIMIZE);
         }
+        else if (action == "dragWindow") {
+            ReleaseCapture();
+            SendMessageW(m_hWnd, WM_NCLBUTTONDOWN, HTCAPTION, 0);
+        }
         else if (action == "maximizeWindow") {
             WINDOWPLACEMENT wp = { sizeof(wp) };
             if (GetWindowPlacement(m_hWnd, &wp)) {
