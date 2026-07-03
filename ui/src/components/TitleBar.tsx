@@ -4,9 +4,10 @@ interface TitleBarProps {
   theme: 'dark' | 'light';
   colors: any;
   sendMessageToHost: (msg: { action: string; data?: any }) => void;
+  appVersion: string;
 }
 
-export default function TitleBar({ theme, colors, sendMessageToHost }: TitleBarProps) {
+export default function TitleBar({ theme, colors, sendMessageToHost, appVersion }: TitleBarProps) {
   const [hoveredBtn, setHoveredBtn] = useState<string | null>(null);
 
   const handleMinimize = () => {
@@ -75,7 +76,7 @@ export default function TitleBar({ theme, colors, sendMessageToHost }: TitleBarP
           borderRadius: '3px',
           fontWeight: 700
         }}>
-          v1.0.0
+          v{appVersion}
         </span>
       </div>
 

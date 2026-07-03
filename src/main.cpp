@@ -157,6 +157,17 @@ int main(int argc, char* argv[]) {
                     return 0; // Terminate if user declines
                 }
             } else {
+                // Cleanup old updater artifacts from previous installation/update session
+                std::filesystem::path oldExe = launcherFolder / "launcher.old";
+                if (std::filesystem::exists(oldExe)) {
+                    try {
+                        std::filesystem::remove(oldExe);
+                        std::cout << "[System] Cleaned up old launcher.old binary." << std::endl;
+                    } catch (...) {
+                        // Safe to ignore if it is still locked briefly by OS
+                    }
+                }
+
                 // If already running from installed AppData, unpack latest embedded UI on startup (supports seamless updates)
                 std::filesystem::path dllPath = launcherFolder / "WebView2Loader.dll";
                 if (!std::filesystem::exists(dllPath)) {

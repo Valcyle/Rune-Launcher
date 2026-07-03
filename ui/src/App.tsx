@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import Dashboard from './pages/Dashboard';
 import Profiles from './pages/Profiles';
+import Settings from './pages/Settings';
 import TitleBar from './components/TitleBar';
 import './App.css';
 
@@ -30,7 +31,7 @@ interface ExternalInfo {
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'launcher' | 'profiles' | 'console'>('launcher');
+  const [activeTab, setActiveTab] = useState<'launcher' | 'profiles' | 'console' | 'settings'>('launcher');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
 
   // Backend States
@@ -40,6 +41,115 @@ export default function App() {
   const [importStatus, setImportStatus] = useState<{ status: string; message: string }>({ status: '', message: '' });
   const [modsList, setModsList] = useState<ModInfo[]>([]);
   const [externalsList, setExternalsList] = useState<ExternalInfo[]>([]);
+
+  // Update States
+  const [appVersion, setAppVersion] = useState<string>('Loading...');
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState<boolean>(false);
+  const [updateStatusText, setUpdateStatusText] = useState<string>('');
+  const [updatePayload, setUpdatePayload] = useState<{ version: string; url: string; notes: string } | null>(null);
+  const [showUpdateModal, setShowUpdateModal] = useState<boolean>(false);
+  const [updateProcessStatus, setUpdateProcessStatus] = useState<'idle' | 'downloading' | 'applying' | 'failed'>('idle');
+
+  // Toast States
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' | 'error' } | null>(null);
+
+  const showToast = (message: string, type: 'success' | 'info' | 'error' = 'info') => {
+    setToast({ message, type });
+  };
+
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 3500);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
+  // Parse version string (e.g. "1.0.0-beta.1" -> { numbers: [1, 0, 0], prerelease: "beta.1" })
+  const parseSemVer = (versionStr: string) => {
+    const cleanStr = versionStr.replace(/^v/, '');
+    const [mainPart, prereleasePart] = cleanStr.split('-');
+    const numbers = mainPart.split('.').map(Number);
+    return { numbers, prerelease: prereleasePart || null };
+  };
+
+  // Compare two SemVer versions
+  const compareSemVer = (v1: string, v2: string): number => {
+    const ver1 = parseSemVer(v1);
+    const ver2 = parseSemVer(v2);
+
+    for (let i = 0; i < 3; i++) {
+      const n1 = ver1.numbers[i] || 0;
+      const n2 = ver2.numbers[i] || 0;
+      if (n1 < n2) return -1;
+      if (n1 > n2) return 1;
+    }
+
+    if (ver1.prerelease && !ver2.prerelease) return -1;
+    if (!ver1.prerelease && ver2.prerelease) return 1;
+    if (!ver1.prerelease && !ver2.prerelease) return 0;
+
+    if (ver1.prerelease! < ver2.prerelease!) return -1;
+    if (ver1.prerelease! > ver2.prerelease!) return 1;
+    return 0;
+  };
+
+  const checkUpdates = async (currentVer: string, manual: boolean) => {
+    if (isCheckingUpdate) return;
+    setIsCheckingUpdate(true);
+    setUpdateStatusText('Checking for updates...');
+
+    try {
+      const channel = localStorage.getItem('updateChannel') || 'stable';
+      let url = 'https://api.github.com/repos/Valcyle/Rune-Launcher/releases';
+      if (channel === 'stable') {
+        url = 'https://api.github.com/repos/Valcyle/Rune-Launcher/releases/latest';
+      }
+
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('GitHub API request failed');
+
+      let latestRelease;
+      if (channel === 'stable') {
+        latestRelease = await res.json();
+      } else {
+        const releases = await res.json();
+        if (!Array.isArray(releases) || releases.length === 0) {
+          throw new Error('No releases found');
+        }
+        latestRelease = releases[0];
+      }
+
+      const remoteVersion = latestRelease.tag_name;
+      const hasUpdate = compareSemVer(currentVer, remoteVersion) < 0;
+
+      // Find the exe asset
+      const exeAsset = latestRelease.assets?.find((a: any) => a.name.endsWith('.exe'));
+      const downloadUrl = exeAsset ? exeAsset.browser_download_url : null;
+
+      if (hasUpdate && downloadUrl) {
+        setUpdatePayload({
+          version: remoteVersion,
+          url: downloadUrl,
+          notes: latestRelease.body || 'No release notes provided.'
+        });
+        setUpdateStatusText(`New update available: ${remoteVersion}`);
+        setShowUpdateModal(true);
+      } else {
+        setUpdateStatusText('Rune Launcher is up to date.');
+        if (manual) {
+          showToast('Rune Launcher is already up to date!', 'success');
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      setUpdateStatusText('Failed to check for updates.');
+      if (manual) {
+        showToast('Failed to check for updates. Please try again.', 'error');
+      }
+    } finally {
+      setIsCheckingUpdate(false);
+    }
+  };
 
   useEffect(() => {
     let listenerRegistered = false;
@@ -56,6 +166,9 @@ export default function App() {
             setActiveProfile(detail.active || 'Default');
             setModsList(detail.mods || []);
             setExternalsList(detail.externals || []);
+            if (detail.version) {
+              setAppVersion(detail.version);
+            }
           } else if (event === 'launchStatus') {
             setLaunchStatus(detail.status || 'idle');
           } else if (event === 'importStatus') {
@@ -63,6 +176,18 @@ export default function App() {
             setTimeout(() => {
               setImportStatus({ status: '', message: '' });
             }, 5000);
+          } else if (event === 'appVersion') {
+            const ver = detail.version || '1.0.0';
+            setAppVersion(ver);
+            setTimeout(() => {
+              checkUpdates(ver, false);
+            }, 1000);
+          } else if (event === 'updateStatus') {
+            setUpdateProcessStatus(detail.status);
+            if (detail.status === 'failed') {
+              showToast('Automatic update failed to download or install.', 'error');
+              setUpdateProcessStatus('idle');
+            }
           }
         }
       } catch (err) {
@@ -77,6 +202,7 @@ export default function App() {
         window.chrome.webview.addEventListener('message', handleMessage);
         listenerRegistered = true;
         sendMessageToHost({ action: 'getProfiles' });
+        sendMessageToHost({ action: 'getAppVersion' });
       } else {
         setTimeout(initWebViewConnection, 50);
       }
@@ -148,6 +274,7 @@ export default function App() {
         theme={theme} 
         colors={colors} 
         sendMessageToHost={sendMessageToHost} 
+        appVersion={appVersion}
       />
 
       <div style={{
@@ -197,6 +324,16 @@ export default function App() {
             <Profiles colors={colors} />
           )}
 
+          {activeTab === 'settings' && (
+            <Settings
+              colors={colors}
+              appVersion={appVersion}
+              onCheckUpdate={(manual) => checkUpdates(appVersion, manual)}
+              updateStatusText={updateStatusText}
+              isCheckingUpdate={isCheckingUpdate}
+            />
+          )}
+
           {/* Global Keyframes Animation */}
           <style dangerouslySetInnerHTML={{__html: `
             .spinner {
@@ -220,9 +357,160 @@ export default function App() {
               margin: 0;
               padding: 0;
             }
+            @keyframes toastSlideIn {
+              0% { transform: translateY(20px) scale(0.95); opacity: 0; }
+              100% { transform: translateY(0) scale(1); opacity: 1; }
+            }
           `}} />
         </main>
       </div>
+
+      {/* Update Available Modal */}
+      {showUpdateModal && updatePayload && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: 'rgba(0, 0, 0, 0.65)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000,
+          backdropFilter: 'blur(4px)'
+        }}>
+          <div style={{
+            backgroundColor: colors.surface,
+            border: `1px solid ${colors.border}`,
+            borderRadius: '16px',
+            width: '450px',
+            padding: '28px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '20px',
+            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.3)'
+          }}>
+            <div>
+              <h3 style={{ margin: '0 0 6px 0', fontSize: '20px', fontWeight: 600 }}>Update Available</h3>
+              <p style={{ margin: 0, color: colors.textMuted, fontSize: '13px' }}>A new version of Rune Launcher is ready to download.</p>
+            </div>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <span style={{ fontSize: '13px', padding: '3px 8px', borderRadius: '4px', backgroundColor: colors.panel, border: `1px solid ${colors.border}` }}>v{appVersion}</span>
+              <span style={{ color: colors.textMuted }}>➔</span>
+              <span style={{ fontSize: '13px', padding: '3px 8px', borderRadius: '4px', backgroundColor: 'rgba(139, 92, 246, 0.1)', border: `1px solid ${colors.glowPurple}`, color: colors.glowPurple, fontWeight: 500 }}>v{updatePayload.version}</span>
+            </div>
+            <div style={{
+              backgroundColor: colors.panel,
+              border: `1px solid ${colors.border}`,
+              borderRadius: '8px',
+              padding: '12px 16px',
+              maxHeight: '140px',
+              overflowY: 'auto',
+              fontSize: '13px',
+              whiteSpace: 'pre-wrap',
+              color: colors.textMuted,
+              lineHeight: 1.5
+            }}>
+              {updatePayload.notes}
+            </div>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '4px' }}>
+              <button
+                onClick={() => setShowUpdateModal(false)}
+                style={{
+                  background: 'transparent',
+                  border: `1px solid ${colors.border}`,
+                  color: colors.text,
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: 500,
+                  fontSize: '13px'
+                }}
+              >
+                Remind Later
+              </button>
+              <button
+                onClick={() => {
+                  setShowUpdateModal(false);
+                  sendMessageToHost({ action: 'triggerUpdate', data: { url: updatePayload.url } });
+                }}
+                style={{
+                  backgroundColor: colors.glowPurple,
+                  color: '#ffffff',
+                  border: 'none',
+                  padding: '8px 20px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: 500,
+                  fontSize: '13px'
+                }}
+              >
+                Update Now
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Downloading/Applying Overlay */}
+      {updateProcessStatus !== 'idle' && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: 'rgba(10, 11, 14, 0.85)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 20000,
+          gap: '16px',
+          backdropFilter: 'blur(8px)'
+        }}>
+          <div className="spinner" style={{ width: '32px', height: '32px', border: `3px solid ${colors.border}`, borderTop: `3px solid ${colors.glowPurple}` }} />
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+            <div style={{ fontWeight: 600, fontSize: '16px' }}>
+              {updateProcessStatus === 'downloading' ? 'Downloading Update...' : 'Applying Update...'}
+            </div>
+            <div style={{ color: colors.textMuted, fontSize: '13px' }}>
+              {updateProcessStatus === 'downloading' ? 'Please keep launcher open. Retrying if network issues occur.' : 'Launcher is restarting to complete update.'}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <div style={{
+          position: 'fixed',
+          bottom: '24px',
+          right: '24px',
+          backgroundColor: colors.surface,
+          border: `1px solid ${toast.type === 'success' ? colors.glowGreen : toast.type === 'error' ? '#ef4444' : colors.border}`,
+          borderRadius: '8px',
+          padding: '12px 20px',
+          color: colors.text,
+          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)',
+          zIndex: 30000,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          animation: 'toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+          fontSize: '14px',
+          backdropFilter: 'blur(8px)'
+        }}>
+          <div style={{
+            width: '8px',
+            height: '8px',
+            borderRadius: '50%',
+            backgroundColor: toast.type === 'success' ? colors.glowGreen : toast.type === 'error' ? '#ef4444' : colors.glowPurple
+          }} />
+          {toast.message}
+        </div>
+      )}
     </div>
   );
 }

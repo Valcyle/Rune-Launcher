@@ -7,6 +7,9 @@
 #include <fstream>
 #include <filesystem>
 #include <thread>
+#include <urlmon.h>
+
+#pragma comment(lib, "urlmon.lib")
 
 // Standard COM helper macros
 #define CHECK_FAILURE(hr) if (FAILED(hr)) { std::cerr << "COM Failure: " << std::hex << hr << std::endl; return false; }
@@ -309,7 +312,7 @@ void AppWindow::registerBridgeCallbacks() {
 
     m_webView->add_WebMessageReceived(
         new MessageReceivedHandler(
-            [this](ICoreWebView2* sender, ICoreWebView2WebMessageReceivedEventArgs* args) -> HRESULT {
+            [this](ICoreWebView2* /*sender*/, ICoreWebView2WebMessageReceivedEventArgs* args) -> HRESULT {
                 LPWSTR messageRaw = nullptr;
                 // Use get_WebMessageAsJson to correctly parse object postMessages sent from React
                 if (SUCCEEDED(args->get_WebMessageAsJson(&messageRaw)) && messageRaw) {
@@ -376,6 +379,19 @@ void AppWindow::handleWebMessage(const std::string& messageJson) {
         }
         else if (action == "closeWindow") {
             PostMessage(m_hWnd, WM_CLOSE, 0, 0);
+        }
+        else if (action == "getAppVersion") {
+            nlohmann::json response = {
+                {"version", RUNE_LAUNCHER_VERSION}
+            };
+            postEventToUI("appVersion", response.dump());
+        }
+        else if (action == "triggerUpdate") {
+            if (!m_isUpdating) {
+                std::string downloadUrl = msg.at("data").at("url").get<std::string>();
+                std::cout << "[System] Auto-update triggered. URL: " << downloadUrl << std::endl;
+                startUpdateDownload(downloadUrl);
+            }
         }
         else if (action == "getProfiles") {
             syncProfilesToUI();
@@ -500,11 +516,112 @@ void AppWindow::syncProfilesToUI() const {
             {"profiles", profiles},
             {"active", activeProfile},
             {"mods", modsArray},
-            {"externals", externalsArray}
+            {"externals", externalsArray},
+            {"version", RUNE_LAUNCHER_VERSION}
         };
         postEventToUI("profilesUpdated", detail.dump());
     } catch (const std::exception& e) {
         std::cerr << "Failed to sync profiles to UI: " << e.what() << std::endl;
+    }
+}
+
+void AppWindow::startUpdateDownload(const std::string& downloadUrl) {
+    m_isUpdating = true;
+    postEventToUI("updateStatus", "{\"status\": \"downloading\"}");
+
+    std::thread([this, downloadUrl]() {
+        try {
+            // Resolve absolute path to AppData/Local/Rune/Launcher
+            std::filesystem::path rootPath = m_profileManager.getProfilePath("Default").parent_path().parent_path();
+            std::filesystem::path launcherFolder = rootPath / "Launcher";
+            std::filesystem::path newExePath = launcherFolder / "launcher.new";
+
+            // If we are in dev mode, newExePath will be next to the current exe
+            wchar_t modulePath[MAX_PATH];
+            if (GetModuleFileNameW(nullptr, modulePath, MAX_PATH) != 0) {
+                std::filesystem::path currentExe(modulePath);
+                // Check if running from dev directory (has CMakeLists.txt/build.ps1 in folder or parent)
+                std::filesystem::path devRoot = currentExe.parent_path();
+                bool isDev = std::filesystem::exists(devRoot / "CMakeLists.txt") || std::filesystem::exists(devRoot / "build.ps1");
+                if (!isDev && devRoot.has_parent_path()) {
+                    isDev = std::filesystem::exists(devRoot.parent_path() / "CMakeLists.txt") || std::filesystem::exists(devRoot.parent_path() / "build.ps1");
+                }
+                if (isDev) {
+                    newExePath = currentExe.parent_path() / "launcher.new";
+                }
+            }
+
+            // Convert URL to wstring
+            int sizeNeeded = MultiByteToWideChar(CP_UTF8, 0, downloadUrl.c_str(), (int)downloadUrl.size(), nullptr, 0);
+            std::wstring wUrl(sizeNeeded, 0);
+            MultiByteToWideChar(CP_UTF8, 0, downloadUrl.c_str(), (int)downloadUrl.size(), &wUrl[0], sizeNeeded);
+
+            std::wstring wDest = newExePath.wstring();
+
+            // Download file synchronously in this background thread
+            HRESULT hr = URLDownloadToFileW(nullptr, wUrl.c_str(), wDest.c_str(), 0, nullptr);
+            if (SUCCEEDED(hr)) {
+                std::cout << "[System] Downloaded update binary successfully to " << newExePath.string() << std::endl;
+                postEventToUI("updateStatus", "{\"status\": \"applying\"}");
+                
+                // Introduce small delay to ensure UI states render correctly
+                std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+                
+                finalizeAndRestart(newExePath);
+            } else {
+                std::cerr << "[System] Failed to download update binary. HRESULT: " << std::hex << hr << std::endl;
+                m_isUpdating = false;
+                postEventToUI("updateStatus", "{\"status\": \"failed\"}");
+            }
+        } catch (const std::exception& e) {
+            std::cerr << "[System] Exception in update download thread: " << e.what() << std::endl;
+            m_isUpdating = false;
+            postEventToUI("updateStatus", "{\"status\": \"failed\"}");
+        }
+    }).detach();
+}
+
+void AppWindow::finalizeAndRestart(const std::filesystem::path& newExePath) {
+    try {
+        wchar_t modulePath[MAX_PATH];
+        if (GetModuleFileNameW(nullptr, modulePath, MAX_PATH) == 0) {
+            throw std::runtime_error("Failed to retrieve current executable path.");
+        }
+        std::filesystem::path currentExe(modulePath);
+        std::filesystem::path oldExe = currentExe.parent_path() / "launcher.old";
+
+        // Remove previous launcher.old if it exists
+        if (std::filesystem::exists(oldExe)) {
+            try { std::filesystem::remove(oldExe); } catch(...) {}
+        }
+
+        // Rename running exe to launcher.old
+        std::filesystem::rename(currentExe, oldExe);
+
+        // Rename launcher.new to launcher.exe
+        std::filesystem::rename(newExePath, currentExe);
+
+        // Launch the newly updated executable
+        STARTUPINFOW si = { sizeof(si) };
+        PROCESS_INFORMATION pi;
+        std::wstring cmd = L"\"" + currentExe.wstring() + L"\"";
+        if (CreateProcessW(nullptr, &cmd[0], nullptr, nullptr, FALSE, 0, nullptr, nullptr, &si, &pi)) {
+            CloseHandle(pi.hProcess);
+            CloseHandle(pi.hThread);
+        } else {
+            // On launch failure, try to restore back to original state
+            std::filesystem::rename(currentExe, newExePath);
+            std::filesystem::rename(oldExe, currentExe);
+            throw std::runtime_error("Failed to spawn the newly updated process.");
+        }
+
+        // Exit process immediately
+        ExitProcess(0);
+
+    } catch (const std::exception& e) {
+        std::cerr << "[System] Self update replacement failed: " << e.what() << std::endl;
+        m_isUpdating = false;
+        postEventToUI("updateStatus", "{\"status\": \"failed\"}");
     }
 }
 

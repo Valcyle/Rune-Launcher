@@ -20,6 +20,9 @@ public:
     AppWindow(ProfileManager pm, ModImporter importer, DependencyResolver resolver, InjectionRunner runner);
     ~AppWindow();
 
+    // Launcher Version Definition
+    static inline const std::string RUNE_LAUNCHER_VERSION = "1.0.0-beta.2";
+
     /**
      * @brief Creates the Win32 window and initializes WebView2.
      * @param width Width of the window.
@@ -63,11 +66,18 @@ private:
     Microsoft::WRL::ComPtr<ICoreWebView2Controller> m_webController;
     Microsoft::WRL::ComPtr<ICoreWebView2> m_webView;
 
+    // Asynchronously downloads new exe and triggers self-update replacement
+    void startUpdateDownload(const std::string& downloadUrl);
+    void finalizeAndRestart(const std::filesystem::path& newExePath);
+
     // Backend dependencies
     ProfileManager m_profileManager;
     ModImporter m_importer;
     DependencyResolver m_resolver;
     InjectionRunner m_runner;
+
+    // Update flag to prevent concurrent updates
+    bool m_isUpdating = false;
 };
 
 } // namespace rune

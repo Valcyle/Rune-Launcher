@@ -74,7 +74,7 @@ endif()
 # Link Windows COM & WebView2 libraries
 if(WIN32)
     # Link libraries (WebView2 is now loaded dynamically via LoadLibrary)
-    target_link_libraries(launcher PRIVATE ole32 oleaut32 uuid dwmapi advapi32)
+    target_link_libraries(launcher PRIVATE ole32 oleaut32 uuid dwmapi advapi32 urlmon)
     
     # If MSVC, link WebView2 Loader stub import library to satisfy external reference resolutions
     if(MSVC)
