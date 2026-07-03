@@ -1,5 +1,6 @@
 #include "injection/InjectionRunner.hpp"
 #include "injection/Injector.hpp"
+#include "ui/Logger.hpp"
 #include <nlohmann/json.hpp>
 #include <fstream>
 #include <iostream>
@@ -66,7 +67,7 @@ bool InjectionRunner::run(const std::string& activeProfileName, const std::wstri
     }
     
     // Scan for target process
-    std::wcout << L"Waiting for process: " << targetProcessName << L"..." << std::endl;
+    Logger::getInstance().log(Logger::Level::Info, "InjectionRunner", "Waiting for Minecraft process...");
     DWORD pid = 0;
     
     // Write a loop that checks findProcessId(targetProcessName) every 500 milliseconds 
@@ -75,18 +76,29 @@ bool InjectionRunner::run(const std::string& activeProfileName, const std::wstri
     while (pid == 0) {
         pid = findProcessId(targetProcessName);
         if (pid == 0) {
+            //it means that the game is not running
+            Logger::getInstance().log(Logger::Level::Debug, "InjectionRunner", "Minecraft process not found.");
+            //going to launch the game using shell execute
+            //the command is "cmd", "/c", "start", "", "minecraft://"
+            //execute it using ShellExecute
+            //after launching wait for 500ms
+            ShellExecute(NULL, "open", "cmd", "/c start minecraft://", NULL, SW_SHOWNORMAL);
+            Logger::getInstance().log(Logger::Level::Info, "InjectionRunner", "Launched Minecraft.");
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
         }
     }
     
-    std::cout << "Target process detected (PID: " << pid << ")." << std::endl;
+    Logger::getInstance().log(Logger::Level::Info, "InjectionRunner", "Target process detected (PID: " + std::to_string(pid) + ").");
 
     // Inject DLLs sequentially
     // Loop through dllsToInject and call rune::injectDll(pid, path) for each DLL.
     // If any injection fails, report failure and return false.
+    //loop through dllsToInject and call rune::injectDll(pid, path) for each dll.
     for (const auto& dllPath : dllsToInject) {
+        //log the injection
+        Logger::getInstance().log(Logger::Level::Info, "InjectionRunner", "Injecting DLL: " + dllPath.string());
         if (!injectDll(pid, dllPath)) {
-            std::cerr << "Failed to inject DLL: " << dllPath.string() << std::endl;
+            Logger::getInstance().log(Logger::Level::Error, "InjectionRunner", "Failed to inject DLL: " + dllPath.string());
             return false;
         }
     }
