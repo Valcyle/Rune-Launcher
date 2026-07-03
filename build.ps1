@@ -17,9 +17,9 @@ if (-not (Test-Path "build_cmake")) {
     New-Item -ItemType Directory -Path "build_cmake" | Out-Null
 }
 
-if (-not (Test-Path "build_cmake/WebView2Loader.dll")) {
+if (-not (Test-Path "build_cmake/webview2_sdk/build/native/x64/WebView2Loader.dll")) {
     Write-Host "Configuring CMake first to resolve dependencies..."
-    cmake -B build_cmake -G "MinGW Makefiles"
+    cmake -B build_cmake -G "Visual Studio 18 2026" -A x64
     if ($LASTEXITCODE -ne 0) {
         Write-Host "Initial CMake Config Failed" -ForegroundColor Red
         exit $LASTEXITCODE
@@ -54,7 +54,7 @@ function Write-HexPayload([string]$filePath, [string]$varName) {
 }
 
 # Embed WebView2Loader.dll
-Write-HexPayload "build_cmake/WebView2Loader.dll" "EMBEDDED_LOADER_DLL"
+Write-HexPayload "build_cmake/webview2_sdk/build/native/x64/WebView2Loader.dll" "EMBEDDED_LOADER_DLL"
 
 # Embed RuneCore.dll
 Write-HexPayload "RuneCore.dll" "EMBEDDED_RUNE_CORE_DLL"
@@ -73,9 +73,9 @@ foreach ($file in $uiFiles) {
     
     # Track metadata
     $fileList.Add([PSCustomObject]@{
-        RelativePath = $relativePath
-        VarName = $varName
-    })
+            RelativePath = $relativePath
+            VarName      = $varName
+        })
     $fileIndex++
 }
 
@@ -94,16 +94,17 @@ $stream.Close()
 
 # 4. Standard Build
 Write-Host "Configuring and building project with CMake..."
-cmake -B build_cmake -G "MinGW Makefiles"
+cmake -B build_cmake -G "Visual Studio 18 2026" -A x64
 if ($LASTEXITCODE -ne 0) {
     Write-Host "CMake Configuration Failed" -ForegroundColor Red
     exit $LASTEXITCODE
 }
 
-cmake --build build_cmake
+cmake --build build_cmake --config Release
 if ($LASTEXITCODE -eq 0) {
-    Write-Host "Build Succeeded: build_cmake/launcher.exe" -ForegroundColor Green
-} else {
+    Write-Host "Build Succeeded: build_cmake/Release/launcher.exe" -ForegroundColor Green
+}
+else {
     Write-Host "Build Failed" -ForegroundColor Red
     exit $LASTEXITCODE
 }

@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.15)
 project(RuneLauncher LANGUAGES CXX)
 
+# Enforce static runtime linking for MSVC globally before target creation
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
 # Use C++20 standard
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -61,7 +64,7 @@ target_include_directories(launcher PRIVATE include src ${WEBVIEW2_INCLUDE_DIR})
 # Compiler-specific settings
 if(MSVC)
     target_compile_options(launcher PRIVATE /W4)
-    set_target_properties(launcher PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS")
+    set_target_properties(launcher PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
 else()
     target_compile_options(launcher PRIVATE -Wall -Wextra)
     # Hide console window in MinGW GUI application
@@ -71,7 +74,12 @@ endif()
 # Link Windows COM & WebView2 libraries
 if(WIN32)
     # Link libraries (WebView2 is now loaded dynamically via LoadLibrary)
-    target_link_libraries(launcher PRIVATE ole32 oleaut32 uuid dwmapi)
+    target_link_libraries(launcher PRIVATE ole32 oleaut32 uuid dwmapi advapi32)
+    
+    # If MSVC, link WebView2 Loader stub import library to satisfy external reference resolutions
+    if(MSVC)
+        target_link_libraries(launcher PRIVATE "${WEBVIEW2_LIB}")
+    endif()
 
     # Copy WebView2Loader.dll next to launcher executable
     add_custom_command(TARGET launcher POST_BUILD

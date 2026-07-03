@@ -69,26 +69,31 @@ bool InjectionRunner::run(const std::string& activeProfileName, const std::wstri
     // Scan for target process
     Logger::getInstance().log(Logger::Level::Info, "InjectionRunner", "Waiting for Minecraft process...");
     DWORD pid = 0;
-    
-    // Write a loop that checks findProcessId(targetProcessName) every 500 milliseconds 
-    //       until a non-zero process ID is detected.
-    //       Hint: Use std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    while (pid == 0) {
-        pid = findProcessId(targetProcessName);
-        if (pid == 0) {
-            //it means that the game is not running
-            Logger::getInstance().log(Logger::Level::Debug, "InjectionRunner", "Minecraft process not found.");
-            //going to launch the game using shell execute
-            //the command is "cmd", "/c", "start", "", "minecraft://"
-            //execute it using ShellExecute
-            //after launching wait for 500ms
-            ShellExecute(NULL, "open", "cmd", "/c start minecraft://", NULL, SW_SHOWNORMAL);
-            Logger::getInstance().log(Logger::Level::Info, "InjectionRunner", "Launched Minecraft.");
+    pid = findProcessId(targetProcessName);
+    if (pid == 0) {
+        // Game is not running, trigger startup via protocol link
+        Logger::getInstance().log(Logger::Level::Debug, "InjectionRunner", "Minecraft process not found. Launching via protocol handler...");
+        ShellExecute(NULL, "open", "cmd", "/c start minecraft://", NULL, SW_HIDE);
+        Logger::getInstance().log(Logger::Level::Info, "InjectionRunner", "Launched Minecraft. Awaiting process spawn...");
+        
+        // Loop up to 30 times (15 seconds max) to await process spawn
+        for (int i = 0; i < 30; ++i) {
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            pid = findProcessId(targetProcessName);
+            if (pid != 0) {
+                break;
+            }
         }
     }
+
+    if (pid == 0) {
+        Logger::getInstance().log(Logger::Level::Error, "InjectionRunner", "Failed to detect Minecraft process after startup.");
+        return false;
+    }
     
-    Logger::getInstance().log(Logger::Level::Info, "InjectionRunner", "Target process detected (PID: " + std::to_string(pid) + ").");
+    Logger::getInstance().log(Logger::Level::Info, "InjectionRunner", "Target process detected (PID: " + std::to_string(pid) + "). Awaiting process initialization...");
+    // Give UWP sandbox runtime extra 2 seconds to initialize memory and dynamic libraries fully before injection
+    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 
     // Inject DLLs sequentially
     // Loop through dllsToInject and call rune::injectDll(pid, path) for each DLL.

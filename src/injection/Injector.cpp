@@ -1,8 +1,82 @@
 #include "injection/Injector.hpp"
 #include <tlhelp32.h>
 #include <iostream>
+#include <aclapi.h>
+#include <sddl.h>
 
 namespace rune {
+
+/**
+ * @brief Grants read/execute access permissions to the sandboxed AppContainer package SID (S-1-15-2-1)
+ *        so that sandboxed processes like Minecraft Bedrock can load the DLL successfully.
+ */
+bool applyAppContainerAcl(const std::wstring& filePath) {
+    PACL pOldDacl = nullptr;
+    PACL pNewDacl = nullptr;
+    PSECURITY_DESCRIPTOR pSD = nullptr;
+
+    // Read the current DACL
+    DWORD result = GetNamedSecurityInfoW(
+        filePath.c_str(),
+        SE_FILE_OBJECT,
+        DACL_SECURITY_INFORMATION,
+        nullptr, nullptr,
+        &pOldDacl,
+        nullptr,
+        &pSD
+    );
+
+    if (result != ERROR_SUCCESS) {
+        std::cerr << "GetNamedSecurityInfoW failed with error: " << result << std::endl;
+        return false;
+    }
+
+    // AppContainer package SID: ALL APPLICATION PACKAGES (S-1-15-2-1)
+    PSID pSid = nullptr;
+    if (!ConvertStringSidToSidA("S-1-15-2-1", &pSid)) {
+        std::cerr << "ConvertStringSidToSidA failed." << std::endl;
+        LocalFree(pSD);
+        return false;
+    }
+
+    EXPLICIT_ACCESSW ea = {};
+    ea.grfAccessPermissions = GENERIC_READ | GENERIC_EXECUTE;
+    ea.grfAccessMode = GRANT_ACCESS;
+    ea.grfInheritance = SUB_CONTAINERS_AND_OBJECTS_INHERIT;
+    ea.Trustee.TrusteeForm = TRUSTEE_IS_SID;
+    ea.Trustee.TrusteeType = TRUSTEE_IS_WELL_KNOWN_GROUP;
+    ea.Trustee.ptstrName = (LPWCH)pSid;
+
+    // Merge EXPLICIT_ACCESS into old DACL to create a new DACL
+    result = SetEntriesInAclW(1, &ea, pOldDacl, &pNewDacl);
+    if (result != ERROR_SUCCESS) {
+        std::cerr << "SetEntriesInAclW failed with error: " << result << std::endl;
+        FreeSid(pSid);
+        LocalFree(pSD);
+        return false;
+    }
+
+    // Apply the new DACL to the DLL file
+    result = SetNamedSecurityInfoW(
+        const_cast<wchar_t*>(filePath.c_str()),
+        SE_FILE_OBJECT,
+        DACL_SECURITY_INFORMATION,
+        nullptr, nullptr,
+        pNewDacl,
+        nullptr
+    );
+
+    FreeSid(pSid);
+    if (pNewDacl) LocalFree(pNewDacl);
+    if (pSD) LocalFree(pSD);
+
+    if (result != ERROR_SUCCESS) {
+        std::cerr << "SetNamedSecurityInfoW failed with error: " << result << std::endl;
+        return false;
+    }
+
+    return true;
+}
 
 DWORD findProcessId(const std::wstring& processName) {
     DWORD pid = 0;
@@ -35,6 +109,11 @@ bool injectDll(DWORD processId, const std::filesystem::path& dllPath) {
     }
 
     std::wstring absoluteDllPath = std::filesystem::absolute(dllPath).make_preferred().wstring();
+
+    // Set ACL for Minecraft (AppContainer) access
+    if (!applyAppContainerAcl(absoluteDllPath)) {
+        std::cerr << "Warning: Failed to apply AppContainer ACLs to DLL: " << dllPath.string() << std::endl;
+    }
 
     // Open target process with required access rights
     HANDLE hProcess = OpenProcess(
