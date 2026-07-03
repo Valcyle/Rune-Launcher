@@ -1,9 +1,9 @@
-#include "ProfileManager.hpp"
-#include "ModImporter.hpp"
-#include "DependencyResolver.hpp"
-#include "InjectionRunner.hpp"
-#include "AppWindow.hpp"
-#include "GeneratedResources.hpp"
+#include "profile/ProfileManager.hpp"
+#include "profile/ModImporter.hpp"
+#include "injection/DependencyResolver.hpp"
+#include "injection/InjectionRunner.hpp"
+#include "ui/AppWindow.hpp"
+#include "ui/GeneratedResources.hpp"
 #include <iostream>
 #include <fstream>
 #include <shlobj.h>

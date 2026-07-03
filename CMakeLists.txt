@@ -8,22 +8,22 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Source files
 set(SOURCES
     src/main.cpp
-    src/ProfileManager.hpp
-    src/ProfileManager.cpp
-    src/ZipUtility.hpp
-    src/ZipUtility.cpp
-    src/ModImporter.hpp
-    src/ModImporter.cpp
-    src/DependencyResolver.hpp
-    src/DependencyResolver.cpp
-    src/Injector.hpp
-    src/Injector.cpp
-    src/InjectionRunner.hpp
-    src/InjectionRunner.cpp
-    src/AppWindow.hpp
-    src/AppWindow.cpp
-    src/GeneratedResources.hpp
-    src/GeneratedResources.cpp
+    src/profile/ProfileManager.hpp
+    src/profile/ProfileManager.cpp
+    src/profile/ZipUtility.hpp
+    src/profile/ZipUtility.cpp
+    src/profile/ModImporter.hpp
+    src/profile/ModImporter.cpp
+    src/injection/DependencyResolver.hpp
+    src/injection/DependencyResolver.cpp
+    src/injection/Injector.hpp
+    src/injection/Injector.cpp
+    src/injection/InjectionRunner.hpp
+    src/injection/InjectionRunner.cpp
+    src/ui/AppWindow.hpp
+    src/ui/AppWindow.cpp
+    src/ui/GeneratedResources.hpp
+    src/ui/GeneratedResources.cpp
 )
 
 add_executable(launcher ${SOURCES})
@@ -52,7 +52,7 @@ set(WEBVIEW2_DLL "${WEBVIEW2_DIR}/build/native/x64/WebView2Loader.dll")
 set(WEBVIEW2_LIB "${WEBVIEW2_DIR}/build/native/x64/WebView2Loader.dll.lib")
 
 # Set include directories
-target_include_directories(launcher PRIVATE include ${WEBVIEW2_INCLUDE_DIR})
+target_include_directories(launcher PRIVATE include src ${WEBVIEW2_INCLUDE_DIR})
 
 # Compiler-specific settings
 if(MSVC)

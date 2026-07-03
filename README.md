@@ -82,13 +82,17 @@ cmake --build build_cmake
 │   └── nlohmann/               # JSON parsing header library
 ├── src/
 │   ├── main.cpp                # App entrypoint (mode selection, self-installer)
-│   ├── AppWindow.h/cpp         # Win32 host window and WebView2 initialization
-│   ├── ProfileManager.h/cpp    # Profile directory creator and scanner
-│   ├── ModImporter.h/cpp       # File format router and extractor
-│   ├── DependencyResolver.h/cpp# SemVer dependency solver
-│   ├── Injector.h/cpp          # Low-level Win32 remote thread injector
-│   ├── InjectionRunner.h/cpp   # Process scanner and injection orchestrator
-│   └── GeneratedResources.h/cpp# Auto-generated hex files representation
+│   ├── ui/                     # WebView2 host window and UI embedding
+│   │   ├── AppWindow.hpp/cpp
+│   │   └── GeneratedResources.hpp/cpp
+│   ├── profile/                # Profile directory creator and scanner
+│   │   ├── ProfileManager.hpp/cpp
+│   │   ├── ModImporter.hpp/cpp
+│   │   └── ZipUtility.hpp/cpp
+│   └── injection/              # DLL injection and SemVer checking
+│       ├── DependencyResolver.hpp/cpp
+│       ├── Injector.hpp/cpp
+│       └── InjectionRunner.hpp/cpp
 └── ui/                         # React/TypeScript Frontend
     ├── dist/                   # Compiled frontend build target
     ├── src/                    # UI code components
@@ -111,7 +115,7 @@ profiles/
 ```
 
 ### Self-Packaging Mechanism
-To maintain a single-binary distribution strategy, `build.ps1` packages binary assets directly into [src/GeneratedResources.cpp](file:///c:/Users/yamad/Desktop/projects/rune-project/Rune-Launcher/src/GeneratedResources.cpp).
+To maintain a single-binary distribution strategy, `build.ps1` packages binary assets directly into [src/ui/GeneratedResources.cpp](file:///c:/Users/yamad/Desktop/projects/rune-project/Rune-Launcher/src/ui/GeneratedResources.cpp).
 On startup:
 - **Development Mode**: Detected if `CMakeLists.txt` is found in the directory hierarchy. The app runs directly in the source directory.
 - **Production Mode**: Prompts the user to install. If accepted, it creates `%USERPROFILE%\AppData\Local\Rune\Launcher`, installs `launcher.exe`, extracts `WebView2Loader.dll`, `RuneCore.dll`, and extracts all static UI files into the `ui/` subdirectory. It also creates a Desktop shortcut.
