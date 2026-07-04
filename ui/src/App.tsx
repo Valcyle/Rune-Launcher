@@ -442,7 +442,7 @@ export default function App() {
               <h3 style={{ margin: '0 0 6px 0', fontSize: '20px', fontWeight: 600 }}>Update Available</h3>
               <p style={{ margin: 0, color: colors.textMuted, fontSize: '13px' }}>A new version of Rune Launcher is ready to download.</p>
             </div>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'center' }}>
               <span style={{ fontSize: '13px', padding: '3px 8px', borderRadius: '4px', backgroundColor: colors.panel, border: `1px solid ${colors.border}` }}>v{appVersion}</span>
               <span style={{ color: colors.textMuted }}>➔</span>
               <span style={{ fontSize: '13px', padding: '3px 8px', borderRadius: '4px', backgroundColor: 'rgba(139, 92, 246, 0.1)', border: `1px solid ${colors.glowPurple}`, color: colors.glowPurple, fontWeight: 500 }}>v{updatePayload.version}</span>
@@ -457,7 +457,8 @@ export default function App() {
               fontSize: '13px',
               whiteSpace: 'pre-wrap',
               color: colors.textMuted,
-              lineHeight: 1.5
+              lineHeight: 1.5,
+              textAlign: 'left'
             }}>
               {updatePayload.notes}
             </div>
