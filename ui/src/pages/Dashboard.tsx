@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import PipelineMap from '../components/PipelineMap';
 import type { ModInfo, ExternalInfo } from '../App';
 
 interface DashboardProps {
@@ -199,9 +198,6 @@ export default function Dashboard({
           </button>
         </div>
       </div>
-
-      {/* Pipeline Map Component */}
-      <PipelineMap launchStatus={launchStatus} colors={colors} />
 
       {/* Launch Status Notification Panel */}
       {launchStatus !== 'idle' && (
