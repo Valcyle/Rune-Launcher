@@ -40,7 +40,7 @@ export default function Dashboard({
   const handleCreateSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
-    
+
     const trimmed = newProfileName.trim();
     if (!trimmed) {
       setErrorMessage('Profile name cannot be empty.');
@@ -77,7 +77,7 @@ export default function Dashboard({
             Isolated process loader pipeline & multi-client coordinator
           </p>
         </div>
- 
+
         {/* Profile Picker & Action */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -85,13 +85,14 @@ export default function Dashboard({
               value={activeProfile}
               onChange={(e) => handleProfileChange(e.target.value)}
               style={{
-                padding: '8px 14px',
-                borderRadius: '6px',
+                padding: '12px 18px',
+                borderRadius: '8px',
                 border: `1px solid ${colors.border}`,
                 background: colors.surface,
                 color: colors.text,
-                fontSize: '13px',
+                fontSize: '15px',
                 fontWeight: 600,
+                height: '48px',
                 outline: 'none',
                 cursor: 'pointer'
               }}
@@ -113,9 +114,10 @@ export default function Dashboard({
                 background: colors.surface,
                 border: `1px solid ${colors.border}`,
                 color: colors.text,
-                padding: '8px 12px',
-                height: '37px',
-                borderRadius: '6px',
+                padding: '12px',
+                width: '48px',
+                height: '48px',
+                borderRadius: '8px',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
@@ -127,7 +129,7 @@ export default function Dashboard({
               }}
               title="Create New Profile"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <line x1="5" y1="12" x2="19" y2="12" />
               </svg>
@@ -141,9 +143,10 @@ export default function Dashboard({
                 background: colors.surface,
                 border: `1px solid ${colors.border}`,
                 color: colors.text,
-                padding: '8px 12px',
-                height: '37px',
-                borderRadius: '6px',
+                padding: '12px',
+                width: '48px',
+                height: '48px',
+                borderRadius: '8px',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
@@ -155,41 +158,42 @@ export default function Dashboard({
               }}
               title="Open Profile Folder"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
               </svg>
             </button>
           </div>
- 
+
           <button
             onClick={handleLaunch}
             onMouseEnter={() => setHovered('launch')}
             onMouseLeave={() => setHovered(null)}
             disabled={launchStatus === 'resolving'}
             style={{
-              padding: '9px 20px',
-              borderRadius: '6px',
+              padding: '16px 32px',
+              borderRadius: '8px',
               border: 'none',
               fontWeight: 700,
-              fontSize: '13.5px',
+              fontSize: '20px',
               cursor: launchStatus === 'resolving' ? 'not-allowed' : 'pointer',
               background: launchStatus === 'resolving' ? '#4b5563' : hovered === 'launch' ? '#059669' : colors.glowGreen,
               color: '#fff',
-              transition: 'background 0.15s ease',
+              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
               display: 'flex',
               alignItems: 'center',
-              gap: '6px',
-              outline: 'none'
+              gap: '8px',
+              outline: 'none',
+              boxShadow: launchStatus === 'resolving' ? 'none' : '0 4px 12px rgba(16, 185, 129, 0.2)'
             }}
           >
             {launchStatus === 'resolving' ? (
               <>
-                <div className="spinner" />
+                <div className="spinner" style={{ width: '16px', height: '16px' }} />
                 <span>SCANNING PROCESS...</span>
               </>
             ) : (
               <>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M8 5v14l11-7z" />
                 </svg>
                 <span>Launch</span>
