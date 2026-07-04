@@ -27,19 +27,25 @@ export default function Button({
   let shadow = 'none';
 
   if (variant === 'primary') {
-    bg = disabled ? '#4b5563' : hovered ? '#059669' : colors.glowGreen;
+    bg = disabled ? '#4b5563' : colors.glowGreen;
     fg = '#fff';
     border = 'none';
     shadow = disabled ? 'none' : '0 4px 12px rgba(16, 185, 129, 0.2)';
   } else if (variant === 'secondary') {
-    bg = hovered ? colors.panel : colors.surface;
+    bg = colors.surface;
     fg = colors.text;
     border = `1px solid ${colors.border}`;
   } else if (variant === 'danger') {
-    bg = hovered ? '#dc2626' : '#ef4444';
+    bg = '#ef4444';
     fg = '#fff';
     border = 'none';
   }
+
+  // Clean up undefined properties from style overrides to prevent them from wiping out default styles
+  const cleanStyle = { ...style };
+  if (cleanStyle.backgroundColor === undefined) delete cleanStyle.backgroundColor;
+  if (cleanStyle.background === undefined) delete cleanStyle.background;
+  if (cleanStyle.color === undefined) delete cleanStyle.color;
 
   return (
     <button
@@ -65,7 +71,9 @@ export default function Button({
         outline: 'none',
         boxShadow: shadow,
         boxSizing: 'border-box',
-        ...style
+        filter: (!disabled && hovered) ? 'brightness(1.08)' : 'none',
+        transform: (!disabled && hovered) ? 'translateY(-1.5px)' : 'none',
+        ...cleanStyle
       }}
     >
       {children}

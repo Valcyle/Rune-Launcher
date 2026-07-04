@@ -5,6 +5,7 @@ interface ModalProps {
   colors: any;
   width?: string;
   children: React.ReactNode;
+  centerTitle?: boolean;
 }
 
 export default function Modal({
@@ -13,7 +14,8 @@ export default function Modal({
   title,
   colors,
   width = '450px',
-  children
+  children,
+  centerTitle = false
 }: ModalProps) {
   if (!isOpen) return null;
 
@@ -57,11 +59,27 @@ export default function Modal({
           display: 'flex',
           flexDirection: 'column',
           gap: '20px',
-          boxSizing: 'border-box'
+          boxSizing: 'border-box',
+          position: 'relative'
         }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3 style={{ fontSize: '18px', fontWeight: 700, color: colors.text, margin: 0 }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: centerTitle ? 'center' : 'space-between',
+          alignItems: 'center',
+          position: 'relative',
+          width: '100%',
+          minHeight: '28px'
+        }}>
+          <h3 style={{
+            fontSize: '18px',
+            fontWeight: 700,
+            color: colors.text,
+            margin: 0,
+            textAlign: centerTitle ? 'center' : 'left',
+            width: centerTitle ? '100%' : 'auto',
+            paddingRight: centerTitle ? '24px' : '0px' // Leave space for close button
+          }}>
             {title}
           </h3>
           <button
@@ -75,7 +93,11 @@ export default function Modal({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              outline: 'none'
+              outline: 'none',
+              position: centerTitle ? 'absolute' : 'relative',
+              right: centerTitle ? 0 : undefined,
+              top: centerTitle ? '50%' : undefined,
+              transform: centerTitle ? 'translateY(-50%)' : 'none'
             }}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">

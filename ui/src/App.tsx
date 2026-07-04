@@ -506,8 +506,9 @@ export default function App() {
           title={t('dashboard.updateAvailable')}
           colors={colors}
           width="450px"
+          centerTitle={true}
         >
-          <p style={{ margin: '0 0 10px 0', color: colors.textMuted, fontSize: '13px' }}>{t('dashboard.updateDesc')}</p>
+          <p style={{ margin: '0 0 10px 0', color: colors.textMuted, fontSize: '13px', textAlign: 'center' }}>{t('dashboard.updateDesc')}</p>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'center', margin: '10px 0' }}>
             <span style={{ fontSize: '13px', padding: '3px 8px', borderRadius: '4px', backgroundColor: colors.panel, border: `1px solid ${colors.border}`, color: colors.text }}>v{appVersion}</span>
             <span style={{ color: colors.textMuted }}>➔</span>
