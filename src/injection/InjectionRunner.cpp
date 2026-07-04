@@ -98,13 +98,20 @@ bool InjectionRunner::run(const std::string& activeProfileName, const std::wstri
     // Inject DLLs sequentially
     // Loop through dllsToInject and call rune::injectDll(pid, path) for each DLL.
     // If any injection fails, report failure and return false.
-    //loop through dllsToInject and call rune::injectDll(pid, path) for each dll.
-    for (const auto& dllPath : dllsToInject) {
-        //log the injection
+    // Loop through dllsToInject and call rune::injectDll(pid, path) for each DLL.
+    // If any injection fails, report failure and return false.
+    for (size_t i = 0; i < dllsToInject.size(); ++i) {
+        const auto& dllPath = dllsToInject[i];
         Logger::getInstance().log(Logger::Level::Info, "InjectionRunner", "Injecting DLL: " + dllPath.string());
         if (!injectDll(pid, dllPath)) {
             Logger::getInstance().log(Logger::Level::Error, "InjectionRunner", "Failed to inject DLL: " + dllPath.string());
             return false;
+        }
+
+        // Sleep between injections to allow DLLs to safely complete initializations.
+        // Sleep 1000ms after RuneCore.dll (the first item), and 2000ms for subsequent DLLs.
+        if (i < dllsToInject.size() - 1) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(i == 0 ? 1000 : 4000));
         }
     }
     

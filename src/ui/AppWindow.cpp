@@ -474,7 +474,7 @@ void AppWindow::handleWebMessage(const std::string& messageJson) {
 
             if (GetOpenFileNameW(&ofn)) {
                 std::filesystem::path filePath(ofn.lpstrFile);
-                std::string activeProfile = "Default";
+                std::string activeProfile = m_activeProfile;
                 
                 std::cout << "Selected file: " << filePath.string() << std::endl;
                 bool success = m_importer.importFile(filePath, activeProfile);
