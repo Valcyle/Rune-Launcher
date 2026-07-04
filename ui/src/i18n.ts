@@ -72,9 +72,7 @@ const resources = {
         author: 'Developer Credits',
         repoLink: 'Visit Repository',
         tech: 'Technology Stack',
-        techDesc: 'Core technologies driving the isolated coordination engine',
-        license: 'License Terms',
-        licenseDesc: 'Distributed under the MIT License.'
+        techDesc: 'Core technologies driving the isolated coordination engine'
       },
       profiles: {
         title: 'Profile Customizer',
@@ -161,9 +159,7 @@ const resources = {
         author: '開発スタッフ',
         repoLink: 'リポジトリを開く',
         tech: '使用技術',
-        techDesc: '隔離型プロセスローダーを支える技術スタック',
-        license: 'ライセンス条項',
-        licenseDesc: 'MITライセンスの下でオープンソースとして配布されています。'
+        techDesc: '隔離型プロセスローダーを支える技術スタック'
       },
       profiles: {
         title: 'プロファイルカスタマイザー',

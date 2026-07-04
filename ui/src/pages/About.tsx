@@ -115,15 +115,6 @@ export default function About({ colors }: AboutProps) {
               ))}
             </div>
           </Card>
-
-          <Card title={t('about.license')} colors={colors}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div style={{ fontWeight: 600, fontSize: '14px', color: colors.text }}>MIT License</div>
-              <p style={{ fontSize: '12px', color: colors.textMuted, margin: 0, lineHeight: 1.5 }}>
-                {t('about.licenseDesc')} Free software for modification and distribution under copyright constraints.
-              </p>
-            </div>
-          </Card>
         </div>
       </div>
     </div>
