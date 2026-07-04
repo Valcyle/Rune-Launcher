@@ -21,34 +21,6 @@ export default function Sidebar({ activeTab, setActiveTab, theme, setTheme, colo
       transition: 'background-color 0.3s'
     }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', alignItems: 'center' }}>
-        {/* Logo */}
-        <div style={{
-          width: '36px',
-          height: '36px',
-          borderRadius: '6px',
-          border: `1px solid ${colors.border}`,
-          backgroundColor: colors.panel,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer'
-        }}>
-          <div style={{
-            width: '28px',
-            height: '28px',
-            backgroundColor: colors.surface,
-            border: `1px solid ${colors.border}`,
-            borderRadius: '5px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: 700,
-            fontSize: '14px',
-            color: colors.text
-          }}>
-            R
-          </div>
-        </div>
 
         {/* Dashboard Tab Icon */}
         <button

@@ -65,15 +65,15 @@ export default function Dashboard({
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <h1 style={{
-            fontSize: '28px',
+            fontSize: '36px',
             fontWeight: 800,
-            margin: '0 0 6px 0',
-            letterSpacing: '-0.8px',
+            margin: '0 0 8px 0',
+            letterSpacing: '-1.2px',
             color: colors.text
           }}>
             Rune Launcher
           </h1>
-          <p style={{ color: colors.textMuted, fontSize: '13px', margin: 0 }}>
+          <p style={{ color: colors.textMuted, fontSize: '14.5px', margin: 0, fontWeight: 500 }}>
             Isolated process loader pipeline & multi-client coordinator
           </p>
         </div>

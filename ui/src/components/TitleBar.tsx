@@ -59,6 +59,17 @@ export default function TitleBar({ theme, colors, sendMessageToHost, appVersion 
           cursor: 'default'
         }}
       >
+        {/* Tiny App Logo Icon */}
+        <img 
+          src="/app.png" 
+          alt="Rune Logo"
+          style={{
+            width: '18px',
+            height: '18px',
+            borderRadius: '4px',
+            display: 'block'
+          }}
+        />
         <span style={{
           fontSize: '11px',
           fontWeight: 800,
