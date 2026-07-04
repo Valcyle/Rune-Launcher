@@ -35,7 +35,7 @@ export default function Settings({ theme, colors, appVersion, onCheckUpdate, upd
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '800px', width: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%', flex: 1 }}>
       <div>
         <h2 style={{ margin: '0 0 8px 0', fontSize: '24px', fontWeight: 600, color: colors.text }}>{t('settings.title')}</h2>
         <p style={{ margin: 0, color: colors.textMuted, fontSize: '14px' }}>{t('settings.desc')}</p>

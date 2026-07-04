@@ -75,6 +75,19 @@ const resources = {
         techDesc: 'Core technologies driving the isolated coordination engine',
         license: 'License Terms',
         licenseDesc: 'Distributed under the MIT License.'
+      },
+      profiles: {
+        title: 'Profile Customizer',
+        desc: 'Manage load sequences, toggle mods, and remove dependencies for the active profile.',
+        modsHeader: 'Mod Packages (Step 3 DLLs)',
+        externalsHeader: 'External DLL Dependencies (Step 2 DLLs)',
+        noMods: 'No mod packages found in this profile.',
+        noExternals: 'No external DLLs found in this profile.',
+        deleteTitle: 'Confirm Deletion',
+        deleteDesc: 'Are you sure you want to delete "{{name}}"? This action will permanently remove the files from disk.',
+        deleteButton: 'Delete',
+        moveUp: 'Move Up',
+        moveDown: 'Move Down'
       }
     }
   },
@@ -151,6 +164,19 @@ const resources = {
         techDesc: '隔離型プロセスローダーを支える技術スタック',
         license: 'ライセンス条項',
         licenseDesc: 'MITライセンスの下でオープンソースとして配布されています。'
+      },
+      profiles: {
+        title: 'プロファイルカスタマイザー',
+        desc: 'アクティブなプロファイルのロード順序の管理、Modの切り替え、依存関係の削除を行います。',
+        modsHeader: 'Modパッケージ (Step 3 DLL)',
+        externalsHeader: '外部DLL依存関係 (Step 2 DLL)',
+        noMods: 'このプロファイルにはModパッケージがありません。',
+        noExternals: 'このプロファイルには外部DLLが見つかりません。',
+        deleteTitle: '削除の確認',
+        deleteDesc: '本当に「{{name}}」を削除しますか？この操作により、ディスクからファイルが完全に削除されます。',
+        deleteButton: '削除',
+        moveUp: '上へ移動',
+        moveDown: '下へ移動'
       }
     }
   }

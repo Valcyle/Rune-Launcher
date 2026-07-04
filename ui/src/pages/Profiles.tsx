@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import type { ModInfo, ExternalInfo } from '../App';
+import Modal from '../components/Modal';
+import Button from '../components/Button';
+import { useTranslation } from 'react-i18next';
 
 interface ProfilesProps {
   colors: any;
@@ -20,7 +23,9 @@ export default function Profiles({
   handleSaveProfileConfig,
   handleDeleteMod
 }: ProfilesProps) {
+  const { t } = useTranslation();
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; isExternal: boolean } | null>(null);
 
   // Helper to update config for enabling/disabling items
   const toggleItem = (id: string, isExternal: boolean) => {
@@ -64,12 +69,9 @@ export default function Profiles({
     handleSaveProfileConfig(config);
   };
 
-  // Triggers deletion alert
+  // Triggers deletion state modal
   const performDelete = (id: string, isExternal: boolean) => {
-    const confirmed = window.confirm(`Are you sure you want to delete "${id}"? This action will permanently remove the files from disk.`);
-    if (confirmed) {
-      handleDeleteMod(id, isExternal);
-    }
+    setDeleteConfirm({ id, isExternal });
   };
 
   return (
@@ -85,10 +87,10 @@ export default function Profiles({
     }}>
       <div>
         <h2 style={{ fontSize: '20px', fontWeight: 800, margin: '0 0 8px 0', color: colors.text }}>
-          Profile Customizer: <span style={{ color: colors.glowGreen }}>{activeProfile}</span>
+          {t('profiles.title')}: <span style={{ color: colors.glowGreen }}>{activeProfile}</span>
         </h2>
         <p style={{ color: colors.textMuted, fontSize: '13px', margin: 0 }}>
-          Manage load sequences, toggle mods, and remove dependencies for the active profile.
+          {t('profiles.desc')}
         </p>
       </div>
 
@@ -101,7 +103,7 @@ export default function Profiles({
         {/* Left Column: Mod Packages */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <h3 style={{ fontSize: '14px', fontWeight: 700, margin: 0, color: colors.text, borderBottom: `1px solid ${colors.border}`, paddingBottom: '8px' }}>
-            Mod Packages (Step 3 DLLs)
+            {t('profiles.modsHeader')}
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {modsList.length > 0 ? (
@@ -148,7 +150,7 @@ export default function Profiles({
                           alignItems: 'center',
                           outline: 'none'
                         }}
-                        title="Move Up"
+                        title={t('profiles.moveUp')}
                       >
                         ▲
                       </button>
@@ -167,7 +169,7 @@ export default function Profiles({
                           alignItems: 'center',
                           outline: 'none'
                         }}
-                        title="Move Down"
+                        title={t('profiles.moveDown')}
                       >
                         ▼
                       </button>
@@ -221,7 +223,7 @@ export default function Profiles({
                         transition: 'color 0.15s ease',
                         outline: 'none'
                       }}
-                      title="Delete mod package"
+                      title={t('profiles.deleteButton')}
                     >
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                         <polyline points="3 6 5 6 21 6" />
@@ -233,7 +235,7 @@ export default function Profiles({
               ))
             ) : (
               <div style={{ padding: '24px', textAlign: 'center', color: colors.textMuted, fontSize: '13px', border: `1px dashed ${colors.border}`, borderRadius: '8px' }}>
-                No mod packages found in this profile.
+                {t('profiles.noMods')}
               </div>
             )}
           </div>
@@ -242,7 +244,7 @@ export default function Profiles({
         {/* Right Column: External DLLs */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <h3 style={{ fontSize: '14px', fontWeight: 700, margin: 0, color: colors.text, borderBottom: `1px solid ${colors.border}`, paddingBottom: '8px' }}>
-            External DLL Dependencies (Step 2 DLLs)
+            {t('profiles.externalsHeader')}
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {externalsList.length > 0 ? (
@@ -286,7 +288,7 @@ export default function Profiles({
                           alignItems: 'center',
                           outline: 'none'
                         }}
-                        title="Move Up"
+                        title={t('profiles.moveUp')}
                       >
                         ▲
                       </button>
@@ -305,7 +307,7 @@ export default function Profiles({
                           alignItems: 'center',
                           outline: 'none'
                         }}
-                        title="Move Down"
+                        title={t('profiles.moveDown')}
                       >
                         ▼
                       </button>
@@ -359,7 +361,7 @@ export default function Profiles({
                         transition: 'color 0.15s ease',
                         outline: 'none'
                       }}
-                      title="Delete DLL file"
+                      title={t('profiles.deleteButton')}
                     >
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                         <polyline points="3 6 5 6 21 6" />
@@ -371,12 +373,51 @@ export default function Profiles({
               ))
             ) : (
               <div style={{ padding: '24px', textAlign: 'center', color: colors.textMuted, fontSize: '13px', border: `1px dashed ${colors.border}`, borderRadius: '8px' }}>
-                No external DLLs found in this profile.
+                {t('profiles.noExternals')}
               </div>
             )}
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={deleteConfirm !== null}
+        onClose={() => setDeleteConfirm(null)}
+        title={t('profiles.deleteTitle')}
+        colors={colors}
+        width="380px"
+        centerTitle={true}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', textAlign: 'center' }}>
+          <p style={{ margin: 0, color: colors.textMuted, fontSize: '13px', lineHeight: 1.5 }}>
+            {t('profiles.deleteDesc', { name: deleteConfirm?.id })}
+          </p>
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+            <Button
+              onClick={() => setDeleteConfirm(null)}
+              variant="secondary"
+              colors={colors}
+              style={{ padding: '8px 16px', fontSize: '13px', height: '36px' }}
+            >
+              {t('dashboard.cancel')}
+            </Button>
+            <Button
+              onClick={() => {
+                if (deleteConfirm) {
+                  handleDeleteMod(deleteConfirm.id, deleteConfirm.isExternal);
+                }
+                setDeleteConfirm(null);
+              }}
+              variant="danger"
+              colors={colors}
+              style={{ padding: '8px 20px', fontSize: '13px', height: '36px' }}
+            >
+              {t('profiles.deleteButton')}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
