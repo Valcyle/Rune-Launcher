@@ -1,17 +1,6 @@
 import { useState } from 'react';
 import PipelineMap from '../components/PipelineMap';
-
-interface ModInfo {
-  id: string;
-  name: string;
-  version: string;
-  entrypoint: string;
-}
-
-interface ExternalInfo {
-  name: string;
-  path: string;
-}
+import type { ModInfo, ExternalInfo } from '../App';
 
 interface DashboardProps {
   profiles: string[];

@@ -437,6 +437,26 @@ void AppWindow::handleWebMessage(const std::string& messageJson) {
             std::cout << "[System] Opening profile folder: " << profilePath.string() << std::endl;
             ShellExecuteW(nullptr, L"open", profilePath.wstring().c_str(), nullptr, nullptr, SW_SHOWDEFAULT);
         }
+        else if (action == "saveProfileConfig") {
+            std::string profile = msg.at("data").at("profile").get<std::string>();
+            nlohmann::json config = msg.at("data").at("config");
+            m_profileManager.saveProfileConfig(profile, config);
+            syncProfilesToUI();
+        }
+        else if (action == "deleteMod") {
+            std::string profile = msg.at("data").at("profile").get<std::string>();
+            std::string id = msg.at("data").at("id").get<std::string>();
+            bool isExternal = msg.at("data").at("isExternal").get<bool>();
+            
+            std::cout << "[System] Request to delete mod: " << id << " from profile: " << profile << std::endl;
+            bool success = m_profileManager.deleteMod(profile, id, isExternal);
+            if (success) {
+                postEventToUI("deleteModStatus", "{\"status\": \"success\", \"message\": \"Deleted successfully.\"}");
+            } else {
+                postEventToUI("deleteModStatus", "{\"status\": \"failed\", \"message\": \"Failed to delete the file.\"}");
+            }
+            syncProfilesToUI();
+        }
         else if (action == "launchGame") {
             std::cout << "Triggering game launch..." << std::endl;
             
@@ -499,10 +519,13 @@ void AppWindow::syncProfilesToUI() const {
         std::string activeProfile = m_activeProfile;
         
         std::filesystem::path profilePath = m_profileManager.getProfilePath(activeProfile);
+        
+        // Load configuration
+        nlohmann::json config = m_profileManager.getProfileConfig(activeProfile);
+        
+        // 1. Scan mods folder
         std::filesystem::path modsPath = profilePath / "mods";
-        
-        nlohmann::json modsArray = nlohmann::json::array();
-        
+        std::vector<nlohmann::json> diskMods;
         if (std::filesystem::exists(modsPath)) {
             for (const auto& entry : std::filesystem::directory_iterator(modsPath)) {
                 if (entry.is_directory()) {
@@ -513,42 +536,117 @@ void AppWindow::syncProfilesToUI() const {
                             nlohmann::json manifest;
                             manifestFile >> manifest;
                             
+                            std::string modId = entry.path().filename().string();
+                            
+                            // Check if disabled
+                            bool isEnabled = true;
+                            if (config.contains("disabled_mods") && config["disabled_mods"].is_array()) {
+                                for (const auto& d : config["disabled_mods"]) {
+                                    if (d == modId) {
+                                        isEnabled = false;
+                                        break;
+                                    }
+                                }
+                            }
+
                             nlohmann::json modInfo = {
-                                {"id", manifest.value("id", entry.path().filename().string())},
-                                {"name", manifest.value("name", entry.path().filename().string())},
+                                {"id", modId},
+                                {"name", manifest.value("name", modId)},
                                 {"version", manifest.value("version", "1.0.0")},
-                                {"entrypoint", manifest.value("entrypoint", "")}
+                                {"entrypoint", manifest.value("entrypoint", "")},
+                                {"enabled", isEnabled}
                             };
-                            modsArray.push_back(modInfo);
+                            diskMods.push_back(modInfo);
                         }
                     }
                 }
             }
         }
 
-        // Scan profiles/[Profile]/external/ for raw client DLLs
-        std::filesystem::path externalPath = profilePath / "external";
-        nlohmann::json externalsArray = nlohmann::json::array();
+        // Sort mods by mod_order
+        nlohmann::json modsArray = nlohmann::json::array();
+        std::vector<std::string> newModOrder;
         
-        if (std::filesystem::exists(externalPath)) {
-            for (const auto& entry : std::filesystem::directory_iterator(externalPath)) {
-                if (entry.is_regular_file() && entry.path().extension() == ".dll") {
-                    nlohmann::json extInfo = {
-                        {"name", entry.path().filename().string()},
-                        {"path", "external/" + entry.path().filename().string()}
-                    };
-                    externalsArray.push_back(extInfo);
+        if (config.contains("mod_order") && config["mod_order"].is_array()) {
+            for (const auto& orderedId : config["mod_order"]) {
+                auto it = std::find_if(diskMods.begin(), diskMods.end(), [&](const nlohmann::json& m) {
+                    return m["id"] == orderedId;
+                });
+                if (it != diskMods.end()) {
+                    modsArray.push_back(*it);
+                    newModOrder.push_back(orderedId);
+                    diskMods.erase(it);
                 }
             }
         }
+        for (const auto& m : diskMods) {
+            modsArray.push_back(m);
+            newModOrder.push_back(m["id"]);
+        }
+
+        // 2. Scan external folder for raw DLLs
+        std::filesystem::path externalPath = profilePath / "external";
+        std::vector<nlohmann::json> diskExternals;
+        if (std::filesystem::exists(externalPath)) {
+            for (const auto& entry : std::filesystem::directory_iterator(externalPath)) {
+                if (entry.is_regular_file() && entry.path().extension() == ".dll") {
+                    std::string dllName = entry.path().filename().string();
+                    
+                    bool isEnabled = true;
+                    if (config.contains("disabled_externals") && config["disabled_externals"].is_array()) {
+                        for (const auto& d : config["disabled_externals"]) {
+                            if (d == dllName) {
+                                isEnabled = false;
+                                break;
+                            }
+                        }
+                    }
+
+                    nlohmann::json extInfo = {
+                        {"id", dllName},
+                        {"name", dllName},
+                        {"path", "external/" + dllName},
+                        {"enabled", isEnabled}
+                    };
+                    diskExternals.push_back(extInfo);
+                }
+            }
+        }
+
+        // Sort externals by external_order
+        nlohmann::json externalsArray = nlohmann::json::array();
+        std::vector<std::string> newExternalOrder;
+        if (config.contains("external_order") && config["external_order"].is_array()) {
+            for (const auto& orderedName : config["external_order"]) {
+                auto it = std::find_if(diskExternals.begin(), diskExternals.end(), [&](const nlohmann::json& e) {
+                    return e["name"] == orderedName;
+                });
+                if (it != diskExternals.end()) {
+                    externalsArray.push_back(*it);
+                    newExternalOrder.push_back(orderedName);
+                    diskExternals.erase(it);
+                }
+            }
+        }
+        for (const auto& e : diskExternals) {
+            externalsArray.push_back(e);
+            newExternalOrder.push_back(e["name"]);
+        }
+
+        // Save adjusted configuration to ensure file list is updated
+        config["mod_order"] = newModOrder;
+        config["external_order"] = newExternalOrder;
+        m_profileManager.saveProfileConfig(activeProfile, config);
 
         nlohmann::json detail = {
             {"profiles", profiles},
             {"active", activeProfile},
             {"mods", modsArray},
             {"externals", externalsArray},
-            {"version", RUNE_LAUNCHER_VERSION}
+            {"version", RUNE_LAUNCHER_VERSION},
+            {"config", config}
         };
+
         postEventToUI("profilesUpdated", detail.dump());
     } catch (const std::exception& e) {
         std::cerr << "Failed to sync profiles to UI: " << e.what() << std::endl;

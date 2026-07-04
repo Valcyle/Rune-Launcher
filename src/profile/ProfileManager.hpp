@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <string>
 #include <vector>
+#include <nlohmann/json.hpp>
 
 namespace rune {
 
@@ -43,6 +44,29 @@ public:
      * @return true if successfully created, false if it already exists or path validation fails.
      */
     bool createProfile(const std::string& profileName) const;
+
+    /**
+     * @brief Reads profile_config.json for the specified profile.
+     * @param profileName The name of the profile.
+     * @return JSON configuration containing orderings and disabled files/folders.
+     */
+    nlohmann::json getProfileConfig(const std::string& profileName) const;
+
+    /**
+     * @brief Writes profile_config.json updates to the filesystem.
+     * @param profileName The name of the profile.
+     * @param config The JSON configuration payload.
+     */
+    void saveProfileConfig(const std::string& profileName, const nlohmann::json& config) const;
+
+    /**
+     * @brief Deletes a mod directory or an external DLL file from the profile.
+     * @param profileName The name of the profile.
+     * @param modId The folder name or DLL file name.
+     * @param isExternal True if deleting from external/, false if from mods/.
+     * @return true if successfully deleted.
+     */
+    bool deleteMod(const std::string& profileName, const std::string& modId, bool isExternal) const;
 
 private:
     std::filesystem::path m_rootPath;

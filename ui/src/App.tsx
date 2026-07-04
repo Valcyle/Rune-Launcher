@@ -18,16 +18,19 @@ declare global {
   }
 }
 
-interface ModInfo {
+export interface ModInfo {
   id: string;
   name: string;
   version: string;
   entrypoint: string;
+  enabled: boolean;
 }
 
-interface ExternalInfo {
+export interface ExternalInfo {
+  id: string;
   name: string;
   path: string;
+  enabled: boolean;
 }
 
 export default function App() {
@@ -41,6 +44,12 @@ export default function App() {
   const [importStatus, setImportStatus] = useState<{ status: string; message: string }>({ status: '', message: '' });
   const [modsList, setModsList] = useState<ModInfo[]>([]);
   const [externalsList, setExternalsList] = useState<ExternalInfo[]>([]);
+  const [profileConfig, setProfileConfig] = useState<any>({
+    disabled_mods: [],
+    disabled_externals: [],
+    mod_order: [],
+    external_order: []
+  });
 
   // Update States
   const [appVersion, setAppVersion] = useState<string>('Loading...');
@@ -166,6 +175,12 @@ export default function App() {
             setActiveProfile(detail.active || 'Default');
             setModsList(detail.mods || []);
             setExternalsList(detail.externals || []);
+            setProfileConfig(detail.config || {
+              disabled_mods: [],
+              disabled_externals: [],
+              mod_order: [],
+              external_order: []
+            });
             if (detail.version) {
               setAppVersion(detail.version);
             }
@@ -189,6 +204,9 @@ export default function App() {
               setUpdateProcessStatus('idle');
             }
           } else if (event === 'createProfileStatus') {
+            const { status, message } = detail;
+            showToast(message, status === 'success' ? 'success' : 'error');
+          } else if (event === 'deleteModStatus') {
             const { status, message } = detail;
             showToast(message, status === 'success' ? 'success' : 'error');
           }
@@ -248,6 +266,14 @@ export default function App() {
 
   const handleOpenProfileFolder = () => {
     sendMessageToHost({ action: 'openProfileFolder' });
+  };
+
+  const handleSaveProfileConfig = (config: any) => {
+    sendMessageToHost({ action: 'saveProfileConfig', data: { profile: activeProfile, config } });
+  };
+
+  const handleDeleteMod = (id: string, isExternal: boolean) => {
+    sendMessageToHost({ action: 'deleteMod', data: { profile: activeProfile, id, isExternal } });
   };
 
   // Color mappings
@@ -334,7 +360,15 @@ export default function App() {
           )}
 
           {activeTab === 'profiles' && (
-            <Profiles colors={colors} />
+            <Profiles
+              colors={colors}
+              activeProfile={activeProfile}
+              modsList={modsList}
+              externalsList={externalsList}
+              profileConfig={profileConfig}
+              handleSaveProfileConfig={handleSaveProfileConfig}
+              handleDeleteMod={handleDeleteMod}
+            />
           )}
 
           {activeTab === 'settings' && (
