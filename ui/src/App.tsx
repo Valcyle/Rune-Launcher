@@ -102,6 +102,7 @@ export default function App() {
     return 0;
   };
 
+  //never change this code unless it really needs to be changed (It is auto update system which is so important)
   const checkUpdates = async (currentVer: string, manual: boolean) => {
     if (isCheckingUpdate) return;
     setIsCheckingUpdate(true);
@@ -169,7 +170,7 @@ export default function App() {
         console.log("[DEBUG-React] Received message from C++:", payload);
         if (payload && payload.event && payload.detail) {
           const { event, detail } = payload;
-          
+
           if (event === 'profilesUpdated') {
             setProfiles(detail.profiles || []);
             setActiveProfile(detail.active || 'Default');
@@ -307,10 +308,10 @@ export default function App() {
       overflow: 'hidden'
     }}>
       {/* 1. Custom Top Title Bar */}
-      <TitleBar 
-        theme={theme} 
-        colors={colors} 
-        sendMessageToHost={sendMessageToHost} 
+      <TitleBar
+        theme={theme}
+        colors={colors}
+        sendMessageToHost={sendMessageToHost}
         appVersion={appVersion}
       />
 
@@ -382,7 +383,8 @@ export default function App() {
           )}
 
           {/* Global Keyframes Animation */}
-          <style dangerouslySetInnerHTML={{__html: `
+          <style dangerouslySetInnerHTML={{
+            __html: `
             .spinner {
               width: 14px;
               height: 14px;
