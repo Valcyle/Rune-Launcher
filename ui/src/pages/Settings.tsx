@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import Select from '../components/Select';
+import Button from '../components/Button';
 
 interface SettingsProps {
+  theme: 'dark' | 'light';
   colors: any;
   appVersion: string;
   onCheckUpdate: (manual: boolean) => void;
@@ -8,7 +12,8 @@ interface SettingsProps {
   isCheckingUpdate: boolean;
 }
 
-export default function Settings({ colors, appVersion, onCheckUpdate, updateStatusText, isCheckingUpdate }: SettingsProps) {
+export default function Settings({ theme, colors, appVersion, onCheckUpdate, updateStatusText, isCheckingUpdate }: SettingsProps) {
+  const { t, i18n } = useTranslation();
   const [channel, setChannel] = useState<'stable' | 'beta'>('stable');
 
   useEffect(() => {
@@ -18,17 +23,22 @@ export default function Settings({ colors, appVersion, onCheckUpdate, updateStat
     }
   }, []);
 
-  const handleChannelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const nextChannel = e.target.value as 'stable' | 'beta';
+  const handleChannelChange = (val: string) => {
+    const nextChannel = val as 'stable' | 'beta';
     setChannel(nextChannel);
     localStorage.setItem('updateChannel', nextChannel);
   };
 
+  const channelOptions = [
+    { value: 'stable', label: t('settings.stable') },
+    { value: 'beta', label: t('settings.beta') }
+  ];
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '600px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '800px', width: '100%' }}>
       <div>
-        <h2 style={{ margin: '0 0 8px 0', fontSize: '24px', fontWeight: 600 }}>Settings</h2>
-        <p style={{ margin: 0, color: colors.textMuted, fontSize: '14px' }}>Configure launcher update settings and application preferences.</p>
+        <h2 style={{ margin: '0 0 8px 0', fontSize: '24px', fontWeight: 600, color: colors.text }}>{t('settings.title')}</h2>
+        <p style={{ margin: 0, color: colors.textMuted, fontSize: '14px' }}>{t('settings.desc')}</p>
       </div>
 
       <div style={{
@@ -43,8 +53,8 @@ export default function Settings({ colors, appVersion, onCheckUpdate, updateStat
         {/* Version Info */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <div style={{ fontWeight: 500, marginBottom: '4px' }}>App Version</div>
-            <div style={{ fontSize: '13px', color: colors.textMuted }}>Current installed version of Rune Launcher</div>
+            <div style={{ fontWeight: 500, marginBottom: '4px', color: colors.text }}>{t('settings.appVersion')}</div>
+            <div style={{ fontSize: '13px', color: colors.textMuted }}>{t('settings.appVersionDesc')}</div>
           </div>
           <div style={{
             fontFamily: 'monospace',
@@ -52,7 +62,8 @@ export default function Settings({ colors, appVersion, onCheckUpdate, updateStat
             padding: '6px 12px',
             borderRadius: '6px',
             border: `1px solid ${colors.border}`,
-            fontSize: '14px'
+            fontSize: '14px',
+            color: colors.text
           }}>
             v{appVersion || '1.0.0'}
           </div>
@@ -63,26 +74,18 @@ export default function Settings({ colors, appVersion, onCheckUpdate, updateStat
         {/* Update Channel */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <div style={{ fontWeight: 500, marginBottom: '4px' }}>Update Channel</div>
-            <div style={{ fontSize: '13px', color: colors.textMuted }}>Choose between stable releases or experimental beta builds</div>
+            <div style={{ fontWeight: 500, marginBottom: '4px', color: colors.text }}>{t('settings.updateChannel')}</div>
+            <div style={{ fontSize: '13px', color: colors.textMuted }}>{t('settings.updateChannelDesc')}</div>
           </div>
-          <select
+          <Select
             value={channel}
             onChange={handleChannelChange}
-            style={{
-              backgroundColor: colors.panel,
-              color: colors.text,
-              border: `1px solid ${colors.border}`,
-              padding: '8px 12px',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              outline: 'none',
-              fontSize: '14px'
-            }}
-          >
-            <option value="stable">Stable (Recommended)</option>
-            <option value="beta">Beta (Experimental)</option>
-          </select>
+            options={channelOptions}
+            colors={colors}
+            theme={theme}
+            minWidth="200px"
+            height="38px"
+          />
         </div>
 
         <hr style={{ border: 'none', borderTop: `1px solid ${colors.border}`, margin: 0 }} />
@@ -90,27 +93,49 @@ export default function Settings({ colors, appVersion, onCheckUpdate, updateStat
         {/* Check Update Button */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <div style={{ fontWeight: 500, marginBottom: '4px' }}>Check for Updates</div>
-            <div style={{ fontSize: '13px', color: colors.textMuted }}>Manually query GitHub for new update payloads</div>
+            <div style={{ fontWeight: 500, marginBottom: '4px', color: colors.text }}>{t('settings.checkUpdates')}</div>
+            <div style={{ fontSize: '13px', color: colors.textMuted }}>{t('settings.checkUpdatesDesc')}</div>
           </div>
-          <button
+          <Button
             onClick={() => onCheckUpdate(true)}
             disabled={isCheckingUpdate}
+            variant={isCheckingUpdate ? 'secondary' : 'primary'}
+            colors={colors}
             style={{
-              backgroundColor: isCheckingUpdate ? colors.panel : colors.glowPurple,
-              color: '#ffffff',
-              border: 'none',
               padding: '10px 18px',
-              borderRadius: '6px',
-              cursor: isCheckingUpdate ? 'default' : 'pointer',
-              fontWeight: 500,
               fontSize: '14px',
-              transition: 'background-color 0.2s',
-              opacity: isCheckingUpdate ? 0.7 : 1
+              height: '38px',
+              backgroundColor: isCheckingUpdate ? colors.panel : colors.glowPurple,
+              boxShadow: isCheckingUpdate ? 'none' : '0 4px 12px rgba(139, 92, 246, 0.2)'
             }}
           >
-            {isCheckingUpdate ? 'Checking...' : 'Check Now'}
-          </button>
+            {isCheckingUpdate ? t('settings.checking') : t('settings.checkNow')}
+          </Button>
+        </div>
+
+        <hr style={{ border: 'none', borderTop: `1px solid ${colors.border}`, margin: 0 }} />
+
+        {/* Language Selection */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <div style={{ fontWeight: 500, marginBottom: '4px', color: colors.text }}>{t('settings.language')}</div>
+            <div style={{ fontSize: '13px', color: colors.textMuted }}>{t('settings.languageDesc')}</div>
+          </div>
+          <Select
+            value={i18n.language.split('-')[0]} // Normalise code like ja-JP -> ja
+            onChange={(val) => {
+              i18n.changeLanguage(val);
+              localStorage.setItem('language', val);
+            }}
+            options={[
+              { value: 'en', label: 'English' },
+              { value: 'ja', label: '日本語' }
+            ]}
+            colors={colors}
+            theme={theme}
+            minWidth="200px"
+            height="38px"
+          />
         </div>
 
         {updateStatusText && (

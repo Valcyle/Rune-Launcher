@@ -431,11 +431,34 @@ void AppWindow::handleWebMessage(const std::string& messageJson) {
                 };
                 postEventToUI("createProfileStatus", response.dump());
             }
-        } 
-        else if (action == "openProfileFolder") {
+        }         else if (action == "openProfileFolder") {
             std::filesystem::path profilePath = m_profileManager.getProfilePath(m_activeProfile);
             std::cout << "[System] Opening profile folder: " << profilePath.string() << std::endl;
             ShellExecuteW(nullptr, L"open", profilePath.wstring().c_str(), nullptr, nullptr, SW_SHOWDEFAULT);
+        }
+        else if (action == "openUrl") {
+            std::string url = msg.at("data").at("url").get<std::string>();
+            int sizeNeeded = MultiByteToWideChar(CP_UTF8, 0, url.c_str(), (int)url.size(), nullptr, 0);
+            std::wstring wUrl(sizeNeeded, 0);
+            MultiByteToWideChar(CP_UTF8, 0, url.c_str(), (int)url.size(), &wUrl[0], sizeNeeded);
+            ShellExecuteW(nullptr, L"open", wUrl.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+        }
+        else if (action == "dragResize") {
+            std::string dir = msg.at("data").at("direction").get<std::string>();
+            WPARAM wParam = HTCLIENT;
+            if (dir == "left") wParam = HTLEFT;
+            else if (dir == "right") wParam = HTRIGHT;
+            else if (dir == "top") wParam = HTTOP;
+            else if (dir == "bottom") wParam = HTBOTTOM;
+            else if (dir == "top-left") wParam = HTTOPLEFT;
+            else if (dir == "top-right") wParam = HTTOPRIGHT;
+            else if (dir == "bottom-left") wParam = HTBOTTOMLEFT;
+            else if (dir == "bottom-right") wParam = HTBOTTOMRIGHT;
+
+            if (wParam != HTCLIENT) {
+                ReleaseCapture();
+                SendMessageW(m_hWnd, WM_NCLBUTTONDOWN, wParam, 0);
+            }
         }
         else if (action == "saveProfileConfig") {
             std::string profile = msg.at("data").at("profile").get<std::string>();

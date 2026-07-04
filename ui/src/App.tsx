@@ -1,9 +1,14 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import Sidebar from './components/Sidebar';
 import Dashboard from './pages/Dashboard';
 import Profiles from './pages/Profiles';
 import Settings from './pages/Settings';
+import About from './pages/About';
 import TitleBar from './components/TitleBar';
+import Modal from './components/Modal';
+import Button from './components/Button';
+import './i18n';
 import './App.css';
 
 declare global {
@@ -34,7 +39,8 @@ export interface ExternalInfo {
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'launcher' | 'profiles' | 'console' | 'settings'>('launcher');
+  const { t } = useTranslation();
+  const [activeTab, setActiveTab] = useState<'launcher' | 'profiles' | 'settings' | 'about'>('launcher');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
 
   // Backend States
@@ -305,8 +311,43 @@ export default function App() {
       margin: 0,
       padding: 0,
       boxSizing: 'border-box',
-      overflow: 'hidden'
+      overflow: 'hidden',
+      position: 'relative'
     }}>
+      {/* Native Drag Resize Overlays (Transparent border overlays to catch resizing clicks) */}
+      <div
+        onMouseDown={() => sendMessageToHost({ action: 'dragResize', data: { direction: 'left' } })}
+        style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', cursor: 'w-resize', zIndex: 9999, pointerEvents: 'auto' }}
+      />
+      <div
+        onMouseDown={() => sendMessageToHost({ action: 'dragResize', data: { direction: 'right' } })}
+        style={{ position: 'absolute', top: 0, right: 0, width: '4px', height: '100%', cursor: 'e-resize', zIndex: 9999, pointerEvents: 'auto' }}
+      />
+      <div
+        onMouseDown={() => sendMessageToHost({ action: 'dragResize', data: { direction: 'bottom' } })}
+        style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '4px', cursor: 's-resize', zIndex: 9999, pointerEvents: 'auto' }}
+      />
+      <div
+        onMouseDown={() => sendMessageToHost({ action: 'dragResize', data: { direction: 'top' } })}
+        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '4px', cursor: 'n-resize', zIndex: 9999, pointerEvents: 'auto' }}
+      />
+      <div
+        onMouseDown={() => sendMessageToHost({ action: 'dragResize', data: { direction: 'bottom-left' } })}
+        style={{ position: 'absolute', bottom: 0, left: 0, width: '8px', height: '8px', cursor: 'sw-resize', zIndex: 10000, pointerEvents: 'auto' }}
+      />
+      <div
+        onMouseDown={() => sendMessageToHost({ action: 'dragResize', data: { direction: 'bottom-right' } })}
+        style={{ position: 'absolute', bottom: 0, right: 0, width: '8px', height: '8px', cursor: 'se-resize', zIndex: 10000, pointerEvents: 'auto' }}
+      />
+      <div
+        onMouseDown={() => sendMessageToHost({ action: 'dragResize', data: { direction: 'top-left' } })}
+        style={{ position: 'absolute', top: 0, left: 0, width: '8px', height: '8px', cursor: 'nw-resize', zIndex: 10000, pointerEvents: 'auto' }}
+      />
+      <div
+        onMouseDown={() => sendMessageToHost({ action: 'dragResize', data: { direction: 'top-right' } })}
+        style={{ position: 'absolute', top: 0, right: 0, width: '8px', height: '8px', cursor: 'ne-resize', zIndex: 10000, pointerEvents: 'auto' }}
+      />
+
       {/* 1. Custom Top Title Bar */}
       <TitleBar
         theme={theme}
@@ -342,49 +383,92 @@ export default function App() {
           gap: '28px',
           boxSizing: 'border-box'
         }}>
-          {activeTab === 'launcher' && (
-            <Dashboard
-              profiles={profiles}
-              activeProfile={activeProfile}
-              launchStatus={launchStatus}
-              importStatus={importStatus}
-              modsList={modsList}
-              externalsList={externalsList}
-              handleProfileChange={handleProfileChange}
-              handleCreateProfile={handleCreateProfile}
-              handleOpenProfileFolder={handleOpenProfileFolder}
-              handleLaunch={handleLaunch}
-              handleImportClick={handleImportClick}
-              theme={theme}
-              colors={colors}
-            />
-          )}
+          <div key={activeTab} className="page-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '28px', flex: 1, width: '100%' }}>
+            {activeTab === 'launcher' && (
+              <Dashboard
+                profiles={profiles}
+                activeProfile={activeProfile}
+                launchStatus={launchStatus}
+                importStatus={importStatus}
+                modsList={modsList}
+                externalsList={externalsList}
+                handleProfileChange={handleProfileChange}
+                handleCreateProfile={handleCreateProfile}
+                handleOpenProfileFolder={handleOpenProfileFolder}
+                handleLaunch={handleLaunch}
+                handleImportClick={handleImportClick}
+                theme={theme}
+                colors={colors}
+              />
+            )}
 
-          {activeTab === 'profiles' && (
-            <Profiles
-              colors={colors}
-              activeProfile={activeProfile}
-              modsList={modsList}
-              externalsList={externalsList}
-              profileConfig={profileConfig}
-              handleSaveProfileConfig={handleSaveProfileConfig}
-              handleDeleteMod={handleDeleteMod}
-            />
-          )}
+            {activeTab === 'profiles' && (
+              <Profiles
+                colors={colors}
+                activeProfile={activeProfile}
+                modsList={modsList}
+                externalsList={externalsList}
+                profileConfig={profileConfig}
+                handleSaveProfileConfig={handleSaveProfileConfig}
+                handleDeleteMod={handleDeleteMod}
+              />
+            )}
 
-          {activeTab === 'settings' && (
-            <Settings
-              colors={colors}
-              appVersion={appVersion}
-              onCheckUpdate={(manual) => checkUpdates(appVersion, manual)}
-              updateStatusText={updateStatusText}
-              isCheckingUpdate={isCheckingUpdate}
-            />
-          )}
+            {activeTab === 'settings' && (
+              <Settings
+                theme={theme}
+                colors={colors}
+                appVersion={appVersion}
+                onCheckUpdate={(manual) => checkUpdates(appVersion, manual)}
+                updateStatusText={updateStatusText}
+                isCheckingUpdate={isCheckingUpdate}
+              />
+            )}
+
+            {activeTab === 'about' && (
+              <About
+                colors={colors}
+              />
+            )}
+          </div>
 
           {/* Global Keyframes Animation */}
           <style dangerouslySetInnerHTML={{
             __html: `
+            .page-fade-in {
+              animation: pageFadeIn 0.80s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+              display: flex;
+              flex-direction: column;
+              flex: 1;
+              width: 100%;
+              transform-origin: top center;
+            }
+            @keyframes pageFadeIn {
+              0% { opacity: 0; transform: scale(0.985) translateY(10px); }
+              100% { opacity: 1; transform: scale(1) translateY(0); }
+            }
+            .sidebar-tooltip {
+              visibility: hidden;
+              opacity: 0;
+              position: absolute;
+              left: 52px;
+              top: 50%;
+              transform: translateY(-50%) translateX(-8px);
+              padding: 6px 12px;
+              border-radius: 6px;
+              font-size: 11px;
+              font-weight: 700;
+              letter-spacing: 0.3px;
+              white-space: nowrap;
+              pointer-events: none;
+              transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+              z-index: 1000;
+            }
+            .sidebar-btn-container:hover .sidebar-tooltip {
+              visibility: visible;
+              opacity: 1;
+              transform: translateY(-50%) translateX(0);
+            }
             .spinner {
               width: 14px;
               height: 14px;
@@ -415,92 +499,57 @@ export default function App() {
       </div>
 
       {/* Update Available Modal */}
-      {showUpdateModal && updatePayload && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
-          backgroundColor: 'rgba(0, 0, 0, 0.65)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 10000,
-          backdropFilter: 'blur(4px)'
-        }}>
-          <div style={{
-            backgroundColor: colors.surface,
-            border: `1px solid ${colors.border}`,
-            borderRadius: '16px',
-            width: '450px',
-            padding: '28px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '20px',
-            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.3)'
-          }}>
-            <div>
-              <h3 style={{ margin: '0 0 6px 0', fontSize: '20px', fontWeight: 600 }}>Update Available</h3>
-              <p style={{ margin: 0, color: colors.textMuted, fontSize: '13px' }}>A new version of Rune Launcher is ready to download.</p>
-            </div>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ fontSize: '13px', padding: '3px 8px', borderRadius: '4px', backgroundColor: colors.panel, border: `1px solid ${colors.border}` }}>v{appVersion}</span>
-              <span style={{ color: colors.textMuted }}>➔</span>
-              <span style={{ fontSize: '13px', padding: '3px 8px', borderRadius: '4px', backgroundColor: 'rgba(139, 92, 246, 0.1)', border: `1px solid ${colors.glowPurple}`, color: colors.glowPurple, fontWeight: 500 }}>v{updatePayload.version}</span>
-            </div>
-            <div style={{
-              backgroundColor: colors.panel,
-              border: `1px solid ${colors.border}`,
-              borderRadius: '8px',
-              padding: '12px 16px',
-              maxHeight: '140px',
-              overflowY: 'auto',
-              fontSize: '13px',
-              whiteSpace: 'pre-wrap',
-              color: colors.textMuted,
-              lineHeight: 1.5,
-              textAlign: 'left'
-            }}>
-              {updatePayload.notes}
-            </div>
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '4px' }}>
-              <button
-                onClick={() => setShowUpdateModal(false)}
-                style={{
-                  background: 'transparent',
-                  border: `1px solid ${colors.border}`,
-                  color: colors.text,
-                  padding: '8px 16px',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontWeight: 500,
-                  fontSize: '13px'
-                }}
-              >
-                Remind Later
-              </button>
-              <button
-                onClick={() => {
-                  setShowUpdateModal(false);
-                  sendMessageToHost({ action: 'triggerUpdate', data: { url: updatePayload.url } });
-                }}
-                style={{
-                  backgroundColor: colors.glowPurple,
-                  color: '#ffffff',
-                  border: 'none',
-                  padding: '8px 20px',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontWeight: 500,
-                  fontSize: '13px'
-                }}
-              >
-                Update Now
-              </button>
-            </div>
+      {updatePayload && (
+        <Modal
+          isOpen={showUpdateModal}
+          onClose={() => setShowUpdateModal(false)}
+          title={t('dashboard.updateAvailable')}
+          colors={colors}
+          width="450px"
+        >
+          <p style={{ margin: '0 0 10px 0', color: colors.textMuted, fontSize: '13px' }}>{t('dashboard.updateDesc')}</p>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'center', margin: '10px 0' }}>
+            <span style={{ fontSize: '13px', padding: '3px 8px', borderRadius: '4px', backgroundColor: colors.panel, border: `1px solid ${colors.border}`, color: colors.text }}>v{appVersion}</span>
+            <span style={{ color: colors.textMuted }}>➔</span>
+            <span style={{ fontSize: '13px', padding: '3px 8px', borderRadius: '4px', backgroundColor: 'rgba(139, 92, 246, 0.1)', border: `1px solid ${colors.glowPurple}`, color: colors.glowPurple, fontWeight: 500 }}>v{updatePayload.version}</span>
           </div>
-        </div>
+          <div style={{
+            backgroundColor: colors.panel,
+            border: `1px solid ${colors.border}`,
+            borderRadius: '8px',
+            padding: '12px 16px',
+            maxHeight: '140px',
+            overflowY: 'auto',
+            fontSize: '13px',
+            whiteSpace: 'pre-wrap',
+            color: colors.textMuted,
+            lineHeight: 1.5,
+            textAlign: 'left'
+          }}>
+            {updatePayload.notes}
+          </div>
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '12px' }}>
+            <Button
+              onClick={() => setShowUpdateModal(false)}
+              variant="secondary"
+              colors={colors}
+              style={{ padding: '8px 16px', fontSize: '13px', height: '36px' }}
+            >
+              {t('dashboard.remindLater')}
+            </Button>
+            <Button
+              onClick={() => {
+                setShowUpdateModal(false);
+                sendMessageToHost({ action: 'triggerUpdate', data: { url: updatePayload.url } });
+              }}
+              variant="primary"
+              colors={colors}
+              style={{ backgroundColor: colors.glowPurple, boxShadow: '0 4px 12px rgba(139, 92, 246, 0.2)', padding: '8px 20px', fontSize: '13px', height: '36px' }}
+            >
+              {t('dashboard.updateNow')}
+            </Button>
+          </div>
+        </Modal>
       )}
 
       {/* Downloading/Applying Overlay */}
