@@ -29,3 +29,8 @@ profiles/
 
 # Local specifications
 spec.md
+
+# Clangd & compilation database
+build_compile_commands/
+compile_commands.json
+.clangd
