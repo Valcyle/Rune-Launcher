@@ -42,7 +42,7 @@ export default function About({ colors }: AboutProps) {
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%', flex: 1 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '800px', width: '100%', margin: '0 auto', textAlign: 'left' }}>
       <div>
         <h2 style={{ margin: '0 0 8px 0', fontSize: '24px', fontWeight: 600, color: colors.text }}>
           {t('about.title')}
