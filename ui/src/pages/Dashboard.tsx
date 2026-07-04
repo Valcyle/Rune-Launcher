@@ -37,6 +37,32 @@ export default function Dashboard({
   const [newProfileName, setNewProfileName] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
+  // Mock states for Content Management system (Phase 5)
+  const [contentTab, setContentTab] = useState<'worlds' | 'textures' | 'skinpacks'>('worlds');
+  const [mockWorlds, setMockWorlds] = useState([
+    { id: 'w1', name: 'Survival World Pro', size: '154 MB', status: true, detail: 'Last played: 2 hours ago' },
+    { id: 'w2', name: 'Creative Test Build', size: '12 MB', status: false, detail: 'Last played: Yesterday' }
+  ]);
+  const [mockTextures, setMockTextures] = useState([
+    { id: 't1', name: 'Faithful 32x HD', size: '18 MB', status: true, detail: 'Author: Vattic' },
+    { id: 't2', name: 'Bare Bones Texture', size: '4.5 MB', status: false, detail: 'Author: RobotFast' }
+  ]);
+  const [mockSkinpacks, setMockSkinpacks] = useState([
+    { id: 's1', name: 'Fantasy Warriors Pack', size: '1.2 MB', status: true, detail: '14 custom skins' },
+    { id: 's2', name: 'Retro Gaming Skins', size: '0.8 MB', status: false, detail: '8 custom skins' }
+  ]);
+
+  const handleAddMockContent = () => {
+    const randomId = Math.random().toString(36).substring(2, 7);
+    if (contentTab === 'worlds') {
+      setMockWorlds([...mockWorlds, { id: randomId, name: `Imported World (${randomId})`, size: '8.4 MB', status: true, detail: 'Last played: Just now' }]);
+    } else if (contentTab === 'textures') {
+      setMockTextures([...mockTextures, { id: randomId, name: `Imported Texture (${randomId})`, size: '2.1 MB', status: true, detail: 'Author: Unknown' }]);
+    } else {
+      setMockSkinpacks([...mockSkinpacks, { id: randomId, name: `Imported Skins (${randomId})`, size: '0.4 MB', status: true, detail: '6 custom skins' }]);
+    }
+  };
+
   const handleCreateSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
@@ -367,7 +393,7 @@ export default function Dashboard({
           </div>
         </div>
 
-        {/* Right Column: Manage Contents (Mock UI Placeholder) */}
+        {/* Right Column: Manage Contents (Phase 5 Mock UI) */}
         <div style={{
           backgroundColor: colors.surface,
           border: `1px solid ${colors.border}`,
@@ -380,22 +406,232 @@ export default function Dashboard({
           <div>
             <h3 style={{ fontSize: '15px', fontWeight: 700, margin: '0 0 4px 0', color: colors.text }}>Manage Contents</h3>
             <p style={{ fontSize: '12px', color: colors.textMuted, margin: 0 }}>
-              Customize Worlds, Textures, and Skinpacks for this profile
+              Customize Worlds, Textures, and Skinpacks for this profile (Simulated UI)
             </p>
           </div>
+
+          {/* Tab buttons */}
+          <div style={{
+            display: 'flex',
+            borderBottom: `1px solid ${colors.border}`,
+            paddingBottom: '2px',
+            gap: '12px'
+          }}>
+            {(['worlds', 'textures', 'skinpacks'] as const).map((tab) => {
+              const isActive = contentTab === tab;
+              const label = tab.charAt(0).toUpperCase() + tab.slice(1);
+              return (
+                <button
+                  key={tab}
+                  onClick={() => setContentTab(tab)}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    borderBottom: isActive ? `2px solid ${colors.glowGreen}` : '2px solid transparent',
+                    color: isActive ? colors.text : colors.textMuted,
+                    padding: '6px 12px',
+                    fontSize: '12.5px',
+                    fontWeight: isActive ? 700 : 500,
+                    cursor: 'pointer',
+                    outline: 'none',
+                    transition: 'all 0.15s ease',
+                    marginBottom: '-2px'
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* List items depending on contentTab */}
           <div style={{
             flex: 1,
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            border: `1px dashed ${colors.border}`,
-            borderRadius: '6px',
-            padding: '40px 20px',
-            color: colors.textMuted,
-            fontSize: '13px'
+            flexDirection: 'column',
+            gap: '10px',
+            maxHeight: '340px',
+            overflowY: 'auto',
+            paddingRight: '4px'
           }}>
-            Content management options will appear here.
+            {/* Render items */}
+            {(() => {
+              const currentList = contentTab === 'worlds' ? mockWorlds 
+                                : contentTab === 'textures' ? mockTextures 
+                                : mockSkinpacks;
+              
+              const toggleItem = (id: string) => {
+                if (contentTab === 'worlds') {
+                  setMockWorlds(mockWorlds.map(w => w.id === id ? { ...w, status: !w.status } : w));
+                } else if (contentTab === 'textures') {
+                  setMockTextures(mockTextures.map(t => t.id === id ? { ...t, status: !t.status } : t));
+                } else {
+                  setMockSkinpacks(mockSkinpacks.map(s => s.id === id ? { ...s, status: !s.status } : s));
+                }
+              };
+
+              const deleteItem = (id: string) => {
+                if (contentTab === 'worlds') {
+                  setMockWorlds(mockWorlds.filter(w => w.id !== id));
+                } else if (contentTab === 'textures') {
+                  setMockTextures(mockTextures.filter(t => t.id !== id));
+                } else {
+                  setMockSkinpacks(mockSkinpacks.filter(s => s.id !== id));
+                }
+              };
+
+              if (currentList.length === 0) {
+                return (
+                  <div style={{
+                    padding: '24px 16px',
+                    textAlign: 'center',
+                    color: colors.textMuted,
+                    fontSize: '12px',
+                    border: `1px dashed ${colors.border}`,
+                    borderRadius: '6px',
+                    margin: '10px 0'
+                  }}>
+                    No {contentTab} installed.
+                  </div>
+                );
+              }
+
+              return currentList.map((item) => (
+                <div key={item.id} style={{
+                  padding: '12px 14px',
+                  backgroundColor: colors.panel,
+                  borderRadius: '6px',
+                  border: `1px solid ${colors.border}`,
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  fontSize: '13px',
+                  transition: 'opacity 0.2s'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
+                    {/* SVG Icon depending on tab */}
+                    <div style={{ color: item.status ? colors.glowGreen : colors.textMuted, display: 'flex', alignItems: 'center' }}>
+                      {contentTab === 'worlds' && (
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="12" r="10" />
+                          <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+                          <path d="M2 12h20" />
+                        </svg>
+                      )}
+                      {contentTab === 'textures' && (
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="3" y="3" width="18" height="18" rx="2" />
+                          <path d="M21 16V8a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2z" />
+                          <path d="M9 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" />
+                          <path d="M21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                        </svg>
+                      )}
+                      {contentTab === 'skinpacks' && (
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                          <circle cx="12" cy="7" r="4" />
+                        </svg>
+                      )}
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                      <span style={{ fontWeight: 600, color: colors.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</span>
+                      <span style={{ fontSize: '11px', color: colors.textMuted }}>{item.detail} • {item.size}</span>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    {/* Switch/Toggle Button (Mock) */}
+                    <button
+                      onClick={() => toggleItem(item.id)}
+                      style={{
+                        width: '34px',
+                        height: '20px',
+                        borderRadius: '10px',
+                        backgroundColor: item.status ? colors.glowGreen : colors.border,
+                        border: 'none',
+                        cursor: 'pointer',
+                        position: 'relative',
+                        padding: 0,
+                        transition: 'background-color 0.2s',
+                        outline: 'none'
+                      }}
+                    >
+                      <div style={{
+                        width: '14px',
+                        height: '14px',
+                        borderRadius: '50%',
+                        backgroundColor: '#ffffff',
+                        position: 'absolute',
+                        top: '3px',
+                        left: item.status ? '17px' : '3px',
+                        transition: 'left 0.2s'
+                      }} />
+                    </button>
+
+                    {/* Delete Button (Mock) */}
+                    <button
+                      onClick={() => deleteItem(item.id)}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: colors.textMuted,
+                        cursor: 'pointer',
+                        padding: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderRadius: '4px',
+                        transition: 'all 0.15s',
+                        outline: 'none'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.color = '#ef4444'}
+                      onMouseLeave={(e) => e.currentTarget.style.color = colors.textMuted}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              ));
+            })()}
           </div>
+
+          {/* Quick Import Button */}
+          <button
+            onClick={handleAddMockContent}
+            style={{
+              padding: '10px',
+              backgroundColor: 'transparent',
+              border: `1px dashed ${colors.border}`,
+              borderRadius: '6px',
+              color: colors.text,
+              fontSize: '12px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              outline: 'none'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = colors.glowGreen;
+              e.currentTarget.style.backgroundColor = theme === 'dark' ? 'rgba(16, 185, 129, 0.04)' : '#f0fdf4';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = colors.border;
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            <span>Add Mock {contentTab === 'worlds' ? 'World' : contentTab === 'textures' ? 'Texture' : 'Skinpack'}</span>
+          </button>
         </div>
       </div>
 
