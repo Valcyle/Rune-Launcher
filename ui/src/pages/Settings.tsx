@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import Select from '../components/Select';
 import Button from '../components/Button';
+import Toggle from '../components/Toggle';
 
 interface SettingsProps {
   theme: 'dark' | 'light';
@@ -10,9 +11,20 @@ interface SettingsProps {
   onCheckUpdate: (manual: boolean) => void;
   updateStatusText: string;
   isCheckingUpdate: boolean;
+  scanThirdParty: boolean;
+  onScanThirdPartyChange: (val: boolean) => void;
 }
 
-export default function Settings({ theme, colors, appVersion, onCheckUpdate, updateStatusText, isCheckingUpdate }: SettingsProps) {
+export default function Settings({
+  theme,
+  colors,
+  appVersion,
+  onCheckUpdate,
+  updateStatusText,
+  isCheckingUpdate,
+  scanThirdParty,
+  onScanThirdPartyChange
+}: SettingsProps) {
   const { t, i18n } = useTranslation();
   const [channel, setChannel] = useState<'stable' | 'beta'>('stable');
 
@@ -135,6 +147,21 @@ export default function Settings({ theme, colors, appVersion, onCheckUpdate, upd
             theme={theme}
             minWidth="200px"
             height="38px"
+          />
+        </div>
+
+        <hr style={{ border: 'none', borderTop: `1px solid ${colors.border}`, margin: 0 }} />
+
+        {/* Scan Third-Party Versions Toggle */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <div style={{ fontWeight: 500, marginBottom: '4px', color: colors.text }}>{t('settings.scanVersions')}</div>
+            <div style={{ fontSize: '13px', color: colors.textMuted }}>{t('settings.scanVersionsDesc')}</div>
+          </div>
+          <Toggle
+            checked={scanThirdParty}
+            onChange={() => onScanThirdPartyChange(!scanThirdParty)}
+            colors={colors}
           />
         </div>
 

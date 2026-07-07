@@ -38,6 +38,13 @@ export interface ExternalInfo {
   enabled: boolean;
 }
 
+export interface MinecraftVersion {
+  name: string;
+  path: string;
+  source: string;
+  version: string;
+}
+
 export default function App() {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<'launcher' | 'profiles' | 'settings' | 'about'>('launcher');
@@ -46,6 +53,12 @@ export default function App() {
   // Backend States
   const [profiles, setProfiles] = useState<string[]>([]);
   const [activeProfile, setActiveProfile] = useState<string>('Default');
+  const [minecraftVersions, setMinecraftVersions] = useState<MinecraftVersion[]>([]);
+  const [activeVersion, setActiveVersion] = useState<string>('Official');
+  const [scanThirdParty, setScanThirdParty] = useState<boolean>(() => {
+    const saved = localStorage.getItem('scanThirdParty');
+    return saved !== null ? saved === 'true' : true;
+  });
   const [launchStatus, setLaunchStatus] = useState<string>('idle'); // idle, resolving, success, failed
   const [importStatus, setImportStatus] = useState<{ status: string; message: string }>({ status: '', message: '' });
   const [modsList, setModsList] = useState<ModInfo[]>([]);
@@ -56,6 +69,14 @@ export default function App() {
     mod_order: [],
     external_order: []
   });
+
+  // Load saved version preference
+  useEffect(() => {
+    const savedVer = localStorage.getItem('activeVersion');
+    if (savedVer) {
+      setActiveVersion(savedVer);
+    }
+  }, []);
 
   // Update States
   const [appVersion, setAppVersion] = useState<string>('Loading...');
@@ -210,6 +231,9 @@ export default function App() {
               showToast('Automatic update failed to download or install.', 'error');
               setUpdateProcessStatus('idle');
             }
+          } else if (event === 'minecraftVersions') {
+            const list = detail.versions || [];
+            setMinecraftVersions(list);
           } else if (event === 'createProfileStatus') {
             const { status, message } = detail;
             showToast(message, status === 'success' ? 'success' : 'error');
@@ -231,6 +255,7 @@ export default function App() {
         listenerRegistered = true;
         sendMessageToHost({ action: 'getProfiles' });
         sendMessageToHost({ action: 'getAppVersion' });
+        sendMessageToHost({ action: 'getMinecraftVersions', data: { scan: scanThirdParty } });
       } else {
         setTimeout(initWebViewConnection, 50);
       }
@@ -258,9 +283,14 @@ export default function App() {
     sendMessageToHost({ action: 'switchProfile', data: { name } });
   };
 
+  const handleVersionChange = (val: string) => {
+    setActiveVersion(val);
+    localStorage.setItem('activeVersion', val);
+  };
+
   const handleLaunch = () => {
     if (launchStatus === 'resolving') return;
-    sendMessageToHost({ action: 'launchGame' });
+    sendMessageToHost({ action: 'launchGame', data: { versionPath: activeVersion } });
   };
 
   const handleImportClick = () => {
@@ -388,6 +418,9 @@ export default function App() {
               <Dashboard
                 profiles={profiles}
                 activeProfile={activeProfile}
+                minecraftVersions={minecraftVersions}
+                activeVersion={activeVersion}
+                handleVersionChange={handleVersionChange}
                 launchStatus={launchStatus}
                 importStatus={importStatus}
                 modsList={modsList}
@@ -422,6 +455,12 @@ export default function App() {
                 onCheckUpdate={(manual) => checkUpdates(appVersion, manual)}
                 updateStatusText={updateStatusText}
                 isCheckingUpdate={isCheckingUpdate}
+                scanThirdParty={scanThirdParty}
+                onScanThirdPartyChange={(val) => {
+                  setScanThirdParty(val);
+                  localStorage.setItem('scanThirdParty', val ? 'true' : 'false');
+                  sendMessageToHost({ action: 'getMinecraftVersions', data: { scan: val } });
+                }}
               />
             )}
 

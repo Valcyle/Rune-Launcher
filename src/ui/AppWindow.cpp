@@ -1,4 +1,5 @@
 #include "ui/AppWindow.hpp"
+#include "ui/VersionManager.hpp"
 #include "discord/DiscordRPC.hpp"
 #include <windowsx.h>
 #include <dwmapi.h>
@@ -397,6 +398,20 @@ void AppWindow::handleWebMessage(const std::string& messageJson) {
         else if (action == "getProfiles") {
             syncProfilesToUI();
         } 
+        else if (action == "getMinecraftVersions") {
+            bool scanEnabled = true;
+            if (msg.contains("data") && msg.at("data").contains("scan")) {
+                scanEnabled = msg.at("data").at("scan").get<bool>();
+            }
+            std::cout << "[System] Scanning custom Minecraft versions (scan=" << (scanEnabled ? "true" : "false") << ")..." << std::endl;
+            auto list = VersionManager::scanVersions(scanEnabled);
+            std::string listJson = VersionManager::serializeToJson(list);
+            
+            nlohmann::json response = {
+                {"versions", nlohmann::json::parse(listJson)}
+            };
+            postEventToUI("minecraftVersions", response.dump());
+        }
         else if (action == "switchProfile") {
             std::string profileName = msg.at("data").at("name").get<std::string>();
             std::cout << "Switching profile to: " << profileName << std::endl;
@@ -483,8 +498,19 @@ void AppWindow::handleWebMessage(const std::string& messageJson) {
         else if (action == "launchGame") {
             std::cout << "Triggering game launch..." << std::endl;
             
+            std::wstring customPath = L"";
+            if (msg.contains("data") && msg.at("data").contains("versionPath")) {
+                std::string pathStr = msg.at("data").at("versionPath").get<std::string>();
+                if (pathStr != "Official") {
+                    int sizeNeeded = MultiByteToWideChar(CP_UTF8, 0, pathStr.c_str(), (int)pathStr.size(), nullptr, 0);
+                    std::wstring wPath(sizeNeeded, 0);
+                    MultiByteToWideChar(CP_UTF8, 0, pathStr.c_str(), (int)pathStr.size(), &wPath[0], sizeNeeded);
+                    customPath = wPath;
+                }
+            }
+
             // Asynchronously start launch sequence to avoid blocking the Win32 main thread
-            std::thread([this]() {
+            std::thread([this, customPath]() {
                 std::vector<std::string> errors;
                 std::string activeProfile = m_activeProfile;
                 
@@ -493,7 +519,7 @@ void AppWindow::handleWebMessage(const std::string& messageJson) {
                 // Update Rich Presence to "Playing Minecraft" during gameplay
                 DiscordRPC::getInstance().updateActivity("Profile: " + activeProfile, "Playing Minecraft", true);
                 
-                bool success = m_runner.run(activeProfile, L"Minecraft.Windows.exe");
+                bool success = m_runner.run(activeProfile, L"Minecraft.Windows.exe", customPath);
                 if (success) {
                     postEventToUI("launchStatus", "{\"status\": \"success\"}");
                 } else {

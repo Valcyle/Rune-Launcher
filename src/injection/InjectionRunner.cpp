@@ -15,7 +15,8 @@ InjectionRunner::InjectionRunner(ProfileManager profileManager,
       m_resolver(std::move(resolver)) {}
 
 bool InjectionRunner::run(const std::string &activeProfileName,
-                          const std::wstring &targetProcessName) const {
+                          const std::wstring &targetProcessName,
+                          const std::wstring &customExePath) const {
   // 1. Verify dependencies first
   std::vector<std::string> depErrors;
   if (!m_resolver.resolve(activeProfileName, depErrors)) {
@@ -147,25 +148,76 @@ bool InjectionRunner::run(const std::string &activeProfileName,
   }
 
   // Scan for target process
-  Logger::getInstance().log(Logger::Level::Info, "InjectionRunner",
-                            "Waiting for Minecraft process...");
   DWORD pid = 0;
-  pid = findProcessId(targetProcessName);
-  if (pid == 0) {
-    // Game is not running, trigger startup via protocol link
-    Logger::getInstance().log(
-        Logger::Level::Debug, "InjectionRunner",
-        "Minecraft process not found. Launching via protocol handler...");
-    ShellExecute(NULL, "open", "cmd", "/c start minecraft://", NULL, SW_HIDE);
-    Logger::getInstance().log(Logger::Level::Info, "InjectionRunner",
-                              "Launched Minecraft. Awaiting process spawn...");
 
-    // Loop up to 30 times (15 seconds max) to await process spawn
-    for (int i = 0; i < 30; ++i) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(500));
-      pid = findProcessId(targetProcessName);
-      if (pid != 0) {
-        break;
+  if (!customExePath.empty()) {
+    Logger::getInstance().log(Logger::Level::Info, "InjectionRunner",
+                              "Launching custom Minecraft version directly...");
+    
+    // Check if file exists
+    if (!std::filesystem::exists(customExePath)) {
+      Logger::getInstance().log(Logger::Level::Error, "InjectionRunner",
+                                "Custom Minecraft executable not found: " + std::filesystem::path(customExePath).string());
+      return false;
+    }
+
+    // Launch via CreateProcessW
+    STARTUPINFOW si = { sizeof(si) };
+    PROCESS_INFORMATION pi = {};
+    
+    // Set Working Directory to the parent folder of the executable
+    std::wstring workingDir = std::filesystem::path(customExePath).parent_path().wstring();
+    
+    // We create a mutable copy of the exe path since CreateProcessW can modify it
+    std::vector<wchar_t> cmdLine(customExePath.begin(), customExePath.end());
+    cmdLine.push_back(L'\0');
+
+    BOOL createSuccess = CreateProcessW(
+        nullptr,
+        cmdLine.data(),
+        nullptr,
+        nullptr,
+        FALSE,
+        0,
+        nullptr,
+        workingDir.c_str(),
+        &si,
+        &pi
+    );
+
+    if (createSuccess) {
+      pid = pi.dwProcessId;
+      Logger::getInstance().log(Logger::Level::Info, "InjectionRunner",
+                                "Successfully launched custom Minecraft process (PID: " + std::to_string(pid) + ")");
+      // Close handles safely
+      CloseHandle(pi.hProcess);
+      CloseHandle(pi.hThread);
+    } else {
+      DWORD err = GetLastError();
+      Logger::getInstance().log(Logger::Level::Error, "InjectionRunner",
+                                "Failed to launch custom Minecraft. Error code: " + std::to_string(err));
+      return false;
+    }
+  } else {
+    Logger::getInstance().log(Logger::Level::Info, "InjectionRunner",
+                              "Waiting for Minecraft process...");
+    pid = findProcessId(targetProcessName);
+    if (pid == 0) {
+      // Game is not running, trigger startup via protocol link
+      Logger::getInstance().log(
+          Logger::Level::Debug, "InjectionRunner",
+          "Minecraft process not found. Launching via protocol handler...");
+      ShellExecute(NULL, "open", "cmd", "/c start minecraft://", NULL, SW_HIDE);
+      Logger::getInstance().log(Logger::Level::Info, "InjectionRunner",
+                                "Launched Minecraft. Awaiting process spawn...");
+
+      // Loop up to 30 times (15 seconds max) to await process spawn
+      for (int i = 0; i < 30; ++i) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        pid = findProcessId(targetProcessName);
+        if (pid != 0) {
+          break;
+        }
       }
     }
   }
@@ -181,7 +233,7 @@ bool InjectionRunner::run(const std::string &activeProfileName,
       Logger::Level::Info, "InjectionRunner",
       "Target process detected (PID: " + std::to_string(pid) +
           "). Awaiting process initialization...");
-  // Give UWP sandbox runtime extra 2 seconds to initialize memory and dynamic
+  // Give UWP sandbox/runtime extra 2 seconds to initialize memory and dynamic
   // libraries fully before injection
   std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 

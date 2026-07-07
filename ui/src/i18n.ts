@@ -45,10 +45,11 @@ const resources = {
         profilePlaceholder: 'e.g. Modded-1.20',
         cancel: 'Cancel',
         create: 'Create',
-        updateAvailable: 'Update Available',
+        updateAvailable: 'Update available',
         updateDesc: 'A new version of Rune Launcher is ready to download.',
         remindLater: 'Remind Later',
-        updateNow: 'Update Now'
+        updateNow: 'Update Now',
+        selectVersion: 'Game Version'
       },
       settings: {
         title: 'Settings',
@@ -64,7 +65,9 @@ const resources = {
         stable: 'Stable (Recommended)',
         beta: 'Beta (Experimental)',
         language: 'Language',
-        languageDesc: 'Choose your preferred display language'
+        languageDesc: 'Choose your preferred display language',
+        scanVersions: 'Scan Third-Party Versions',
+        scanVersionsDesc: 'Scan folders of Oderso and LeviLauncher to allow launch execution'
       },
       about: {
         title: 'About',
@@ -135,7 +138,8 @@ const resources = {
         updateAvailable: 'アップデートが利用可能です',
         updateDesc: '新しいバージョンの Rune Launcher をダウンロードする準備ができました。',
         remindLater: '後で通知',
-        updateNow: '今すぐ更新'
+        updateNow: '今すぐ更新',
+        selectVersion: 'ゲームバージョン'
       },
       settings: {
         title: '設定',
@@ -151,7 +155,9 @@ const resources = {
         stable: '安定版 (推奨)',
         beta: 'ベータ版 (実験的)',
         language: '表示言語',
-        languageDesc: '優先する表示言語を選択します'
+        languageDesc: '優先する表示言語を選択します',
+        scanVersions: 'サードパーティ製バージョンの検出',
+        scanVersionsDesc: 'Oderso や LeviLauncher のフォルダをスキャンし、ゲームバージョン一覧に表示します'
       },
       about: {
         title: 'アバウト',

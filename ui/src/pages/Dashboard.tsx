@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { ModInfo, ExternalInfo } from '../App';
+import type { ModInfo, ExternalInfo, MinecraftVersion } from '../App';
 import Select from '../components/Select';
 import Button from '../components/Button';
 import IconButton from '../components/IconButton';
@@ -11,6 +11,9 @@ import Card from '../components/Card';
 interface DashboardProps {
   profiles: string[];
   activeProfile: string;
+  minecraftVersions: MinecraftVersion[];
+  activeVersion: string;
+  handleVersionChange: (val: string) => void;
   launchStatus: string;
   importStatus: { status: string; message: string };
   modsList: ModInfo[];
@@ -27,6 +30,9 @@ interface DashboardProps {
 export default function Dashboard({
   profiles,
   activeProfile,
+  minecraftVersions,
+  activeVersion,
+  handleVersionChange,
   launchStatus,
   importStatus,
   modsList,
@@ -139,6 +145,20 @@ export default function Dashboard({
         {/* Profile Picker & Action */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {/* Version Select */}
+            <Select
+              value={activeVersion}
+              onChange={handleVersionChange}
+              options={[
+                { value: 'Official', label: 'Official (GDK)' },
+                ...minecraftVersions.map(v => ({ value: v.path, label: v.name }))
+              ]}
+              colors={colors}
+              theme={theme}
+              minWidth="200px"
+              height="48px"
+            />
+
             <Select
               value={activeProfile}
               onChange={handleProfileChange}
