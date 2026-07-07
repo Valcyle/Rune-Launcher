@@ -22,7 +22,7 @@ public:
   ~AppWindow();
 
   // Launcher Version Definition
-  static inline const std::string RUNE_LAUNCHER_VERSION = "1.0.0-beta.7";
+  static inline const std::string RUNE_LAUNCHER_VERSION = "1.0.0-beta.8";
 
   /**
    * @brief Creates the Win32 window and initializes WebView2.
