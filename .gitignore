@@ -34,3 +34,5 @@ spec.md
 build_compile_commands/
 compile_commands.json
 .clangd
+ui/.gitignore
+test_xbox_creds.txt

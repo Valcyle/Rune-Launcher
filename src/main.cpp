@@ -11,6 +11,8 @@
 #include <objbase.h>
 #include <wrl/client.h>
 #include <windows.h>
+#include <wincred.h>
+
 
 bool createDesktopShortcut(const std::filesystem::path& targetExePath) {
     Microsoft::WRL::ComPtr<IShellLinkW> shellLink;
