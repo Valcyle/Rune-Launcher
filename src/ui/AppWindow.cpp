@@ -138,6 +138,8 @@ bool AppWindow::create(int width, int height, const std::wstring& title) {
     wcex.style = CS_HREDRAW | CS_VREDRAW;
     wcex.lpfnWndProc = WndProc;
     wcex.hInstance = hInstance;
+    wcex.hIcon = (HICON)::LoadImageW(hInstance, L"IDI_ICON1", IMAGE_ICON, ::GetSystemMetrics(SM_CXICON), ::GetSystemMetrics(SM_CYICON), LR_DEFAULTCOLOR);
+    wcex.hIconSm = (HICON)::LoadImageW(hInstance, L"IDI_ICON1", IMAGE_ICON, ::GetSystemMetrics(SM_CXSMICON), ::GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR);
     wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
     wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     wcex.lpszClassName = L"RuneLauncherWindowClass";
