@@ -13,6 +13,9 @@ interface SettingsProps {
   isCheckingUpdate: boolean;
   scanThirdParty: boolean;
   onScanThirdPartyChange: (val: boolean) => void;
+  primaryColor: string;
+  secondaryColor: string;
+  onColorsChange: (primary: string, secondary: string) => void;
 }
 
 export default function Settings({
@@ -23,7 +26,10 @@ export default function Settings({
   updateStatusText,
   isCheckingUpdate,
   scanThirdParty,
-  onScanThirdPartyChange
+  onScanThirdPartyChange,
+  primaryColor,
+  secondaryColor,
+  onColorsChange
 }: SettingsProps) {
   const { t, i18n } = useTranslation();
   const [channel, setChannel] = useState<'stable' | 'beta'>('stable');
@@ -163,6 +169,110 @@ export default function Settings({
             onChange={() => onScanThirdPartyChange(!scanThirdParty)}
             colors={colors}
           />
+        </div>
+
+        <hr style={{ border: 'none', borderTop: `1px solid ${colors.border}`, margin: 0 }} />
+
+        {/* Theme Customization */}
+        <div>
+          <div style={{ fontWeight: 600, marginBottom: '6px', color: colors.text, fontSize: '15px' }}>
+            {t('settings.themeCustomization')}
+          </div>
+          <div style={{ fontSize: '13px', color: colors.textMuted, marginBottom: '16px' }}>
+            {t('settings.themeCustomizationDesc')}
+          </div>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', backgroundColor: colors.panel, padding: '16px', borderRadius: '8px', border: `1px solid ${colors.border}` }}>
+            {/* Color Pickers */}
+            <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '13px', fontWeight: 600, color: colors.text }}>{t('settings.primaryColor')}</span>
+                <input
+                  type="color"
+                  value={primaryColor}
+                  onChange={(e) => onColorsChange(e.target.value, secondaryColor)}
+                  style={{
+                    border: 'none',
+                    outline: 'none',
+                    background: 'transparent',
+                    width: '36px',
+                    height: '36px',
+                    cursor: 'pointer',
+                    padding: 0
+                  }}
+                />
+                <span style={{ fontSize: '12px', fontFamily: 'monospace', color: colors.textMuted }}>{primaryColor.toUpperCase()}</span>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '13px', fontWeight: 600, color: colors.text }}>{t('settings.secondaryColor')}</span>
+                <input
+                  type="color"
+                  value={secondaryColor}
+                  onChange={(e) => onColorsChange(primaryColor, e.target.value)}
+                  style={{
+                    border: 'none',
+                    outline: 'none',
+                    background: 'transparent',
+                    width: '36px',
+                    height: '36px',
+                    cursor: 'pointer',
+                    padding: 0
+                  }}
+                />
+                <span style={{ fontSize: '12px', fontFamily: 'monospace', color: colors.textMuted }}>{secondaryColor.toUpperCase()}</span>
+              </div>
+            </div>
+
+            {/* Presets and Reset */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginTop: '4px' }}>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                {[
+                  { name: t('settings.presetOceanBlue'), primary: '#2563eb', secondary: '#3b82f6' },
+                  { name: t('settings.presetEmeraldGreen'), primary: '#10b981', secondary: '#8b5cf6' },
+                  { name: t('settings.presetAmethystPurple'), primary: '#8b5cf6', secondary: '#ec4899' },
+                  { name: t('settings.presetVolcanicRed'), primary: '#ef4444', secondary: '#f97316' }
+                ].map((preset) => {
+                  const isCurrent = primaryColor.toLowerCase() === preset.primary.toLowerCase() && secondaryColor.toLowerCase() === preset.secondary.toLowerCase();
+                  return (
+                    <button
+                      key={preset.name}
+                      onClick={() => onColorsChange(preset.primary, preset.secondary)}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        border: isCurrent ? `2px solid ${colors.glowGreen}` : `1px solid ${colors.border}`,
+                        background: isCurrent ? `${colors.glowGreen}15` : colors.surface,
+                        color: colors.text,
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <div style={{ display: 'flex', gap: '2px' }}>
+                        <span style={{ display: 'block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: preset.primary }} />
+                        <span style={{ display: 'block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: preset.secondary }} />
+                      </div>
+                      {preset.name}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <Button
+                onClick={() => onColorsChange('#2563eb', '#3b82f6')}
+                variant="secondary"
+                colors={colors}
+                style={{ padding: '6px 12px', fontSize: '12px', height: '30px' }}
+              >
+                {t('settings.resetDefault')}
+              </Button>
+            </div>
+          </div>
         </div>
 
         {updateStatusText && (

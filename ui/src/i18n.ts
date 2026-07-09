@@ -67,7 +67,16 @@ const resources = {
         language: 'Language',
         languageDesc: 'Choose your preferred display language',
         scanVersions: 'Scan Third-Party Versions',
-        scanVersionsDesc: 'Scan folders of Oderso and LeviLauncher to allow launch execution'
+        scanVersionsDesc: 'Scan folders of Oderso and LeviLauncher to allow launch execution',
+        themeCustomization: 'Theme Customization',
+        themeCustomizationDesc: 'Customize primary and secondary glow accents of the launcher.',
+        primaryColor: 'Primary Accent',
+        secondaryColor: 'Secondary Accent',
+        resetDefault: 'Reset to Default',
+        presetOceanBlue: 'Ocean Blue',
+        presetEmeraldGreen: 'Emerald Green',
+        presetAmethystPurple: 'Amethyst Purple',
+        presetVolcanicRed: 'Volcanic Red'
       },
       about: {
         title: 'About',
@@ -157,7 +166,16 @@ const resources = {
         language: '表示言語',
         languageDesc: '優先する表示言語を選択します',
         scanVersions: 'サードパーティ製バージョンの検出',
-        scanVersionsDesc: 'Oderso や LeviLauncher のフォルダをスキャンし、ゲームバージョン一覧に表示します'
+        scanVersionsDesc: 'Oderso や LeviLauncher のフォルダをスキャンし、ゲームバージョン一覧に表示します',
+        themeCustomization: 'テーマカスタマイズ',
+        themeCustomizationDesc: 'ランチャーのプライマリおよびセカンダリの光彩アクセントをカスタマイズします。',
+        primaryColor: 'プライマリ色',
+        secondaryColor: 'セカンダリ色',
+        resetDefault: 'デフォルトに戻す',
+        presetOceanBlue: 'オーシャンブルー',
+        presetEmeraldGreen: 'エメラルドグリーン',
+        presetAmethystPurple: 'アメジストパープル',
+        presetVolcanicRed: 'ボルカニックレッド'
       },
       about: {
         title: 'アバウト',

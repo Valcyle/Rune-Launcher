@@ -50,6 +50,14 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<'launcher' | 'profiles' | 'settings' | 'about'>('launcher');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
 
+  // Custom theme colors state (default is blue-based)
+  const [primaryColor, setPrimaryColor] = useState<string>(() => {
+    return localStorage.getItem('themePrimaryColor') || '#2563eb';
+  });
+  const [secondaryColor, setSecondaryColor] = useState<string>(() => {
+    return localStorage.getItem('themeSecondaryColor') || '#3b82f6';
+  });
+
   // Backend States
   const [profiles, setProfiles] = useState<string[]>([]);
   const [activeProfile, setActiveProfile] = useState<string>('Default');
@@ -317,13 +325,13 @@ export default function App() {
   const isDark = theme === 'dark';
   const colors = {
     bg: isDark ? '#0e0f12' : '#f1f3f5',
-    surface: isDark ? '#15171e' : '#ffffff',
+    surface: isDark ? '#15151bff' : '#ffffff',
     panel: isDark ? '#1b1e26' : '#f8fafc',
     border: isDark ? '#242835' : '#e4e4e7',
     text: isDark ? '#e3e3e6' : '#18181b',
     textMuted: isDark ? '#8c8c93' : '#71717a',
-    glowGreen: '#10b981',
-    glowPurple: '#8b5cf6',
+    glowGreen: primaryColor,
+    glowPurple: secondaryColor,
     sidebarBg: isDark ? '#121318' : '#ffffff',
     sidebarActiveBg: isDark ? '#20232c' : '#e4e4e7',
     shadow: isDark ? 'none' : '0 1px 3px rgba(0, 0, 0, 0.05)'
@@ -460,6 +468,14 @@ export default function App() {
                   setScanThirdParty(val);
                   localStorage.setItem('scanThirdParty', val ? 'true' : 'false');
                   sendMessageToHost({ action: 'getMinecraftVersions', data: { scan: val } });
+                }}
+                primaryColor={primaryColor}
+                secondaryColor={secondaryColor}
+                onColorsChange={(primary, secondary) => {
+                  setPrimaryColor(primary);
+                  setSecondaryColor(secondary);
+                  localStorage.setItem('themePrimaryColor', primary);
+                  localStorage.setItem('themeSecondaryColor', secondary);
                 }}
               />
             )}
