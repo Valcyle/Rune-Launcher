@@ -50,6 +50,17 @@ export default function Dashboard({
   const [newProfileName, setNewProfileName] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
+  // Screen width observer for responsive launcher layout (breakpoint 1150px)
+  const [isWide, setIsWide] = useState(window.innerWidth >= 1150);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsWide(window.innerWidth >= 1150);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Rotating Tips system
   const tips = [
     "Tip: Drag and drop custom DLL files directly onto the launcher to import them.",
@@ -139,11 +150,11 @@ export default function Dashboard({
           marginBottom: '8px'
         }}
       >
-        {/* Header Module */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
-          {/* Left Side: Title & Selectors stacked vertically */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', flex: 1, minWidth: '340px' }}>
-            <div>
+        {isWide ? (
+          /* ================== WIDE LAYOUT (Single Row) ================== */
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '20px' }}>
+            {/* Left Block: Title */}
+            <div style={{ flexShrink: 0 }}>
               <h1 style={{
                 fontSize: '36px',
                 fontWeight: 800,
@@ -158,89 +169,192 @@ export default function Dashboard({
               </p>
             </div>
 
-            {/* Version & Profile Selectors */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              {/* Version Select */}
-              <Select
-                value={activeVersion}
-                onChange={handleVersionChange}
-                options={[
-                  { value: 'Official', label: 'Official (GDK)' },
-                  ...minecraftVersions.map(v => ({ value: v.path, label: v.name }))
-                ]}
-                colors={colors}
-                theme={theme}
-                minWidth="190px"
-                height="48px"
-              />
+            {/* Right Block: Selectors & Launch button inline */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexShrink: 0 }}>
+              {/* Version & Profile Selectors */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                <Select
+                  value={activeVersion}
+                  onChange={handleVersionChange}
+                  options={[
+                    { value: 'Official', label: 'Official (GDK)' },
+                    ...minecraftVersions.map(v => ({ value: v.path, label: v.name }))
+                  ]}
+                  colors={colors}
+                  theme={theme}
+                  minWidth="190px"
+                  height="48px"
+                />
 
-              <Select
-                value={activeProfile}
-                onChange={handleProfileChange}
-                options={profiles.length > 0 ? profiles.map(p => ({ value: p, label: p })) : [{ value: 'Default', label: 'Default' }]}
-                colors={colors}
-                theme={theme}
-                minWidth="130px"
-                height="48px"
-              />
+                <Select
+                  value={activeProfile}
+                  onChange={handleProfileChange}
+                  options={profiles.length > 0 ? profiles.map(p => ({ value: p, label: p })) : [{ value: 'Default', label: 'Default' }]}
+                  colors={colors}
+                  theme={theme}
+                  minWidth="130px"
+                  height="48px"
+                />
 
-              <IconButton
-                onClick={() => setShowCreateModal(true)}
-                title={t('dashboard.createProfile')}
+                <IconButton
+                  onClick={() => setShowCreateModal(true)}
+                  title={t('dashboard.createProfile')}
+                  colors={colors}
+                  size="48px"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                </IconButton>
+
+                <IconButton
+                  onClick={handleOpenProfileFolder}
+                  title="Open Profile Folder"
+                  colors={colors}
+                  size="48px"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                  </svg>
+                </IconButton>
+              </div>
+
+              {/* Launch Button */}
+              <Button
+                onClick={handleLaunch}
+                disabled={launchStatus === 'resolving'}
+                variant="primary"
                 colors={colors}
-                size="48px"
+                style={{
+                  padding: '14px 32px',
+                  fontSize: '24px',
+                  height: '60px',
+                  width: '210px',
+                  backgroundColor: launchStatus === 'resolving' ? '#4b5563' : undefined,
+                  boxShadow: launchStatus === 'resolving' ? 'none' : `0 4px 14px ${colors.glowGreen}33`
+                }}
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <line x1="12" y1="5" x2="12" y2="19" />
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-              </IconButton>
-
-              <IconButton
-                onClick={handleOpenProfileFolder}
-                title="Open Profile Folder"
-                colors={colors}
-                size="48px"
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-                </svg>
-              </IconButton>
+                {launchStatus === 'resolving' ? (
+                  <>
+                    <div className="spinner" style={{ width: '18px', height: '18px' }} />
+                    <span>{t('dashboard.scanningProcess')}</span>
+                  </>
+                ) : (
+                  <>
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                    <span>{t('dashboard.launchButton')}</span>
+                  </>
+                )}
+              </Button>
             </div>
           </div>
+        ) : (
+          /* ================== NARROW LAYOUT (2 Columns Stacked) ================== */
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
+            {/* Left Side: Title & Selectors stacked vertically */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', flex: 1, minWidth: '340px' }}>
+              <div>
+                <h1 style={{
+                  fontSize: '36px',
+                  fontWeight: 800,
+                  margin: '0 0 6px 0',
+                  letterSpacing: '-1.2px',
+                  color: colors.text
+                }}>
+                  {t('dashboard.title')}
+                </h1>
+                <p style={{ color: colors.textMuted, fontSize: '14.5px', margin: 0, fontWeight: 500 }}>
+                  {t('dashboard.subtitle')}
+                </p>
+              </div>
 
-          {/* Right Side: Launch Button (aligns to the right, centered vertically relative to the left block) */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flexShrink: 0 }}>
-            <Button
-              onClick={handleLaunch}
-              disabled={launchStatus === 'resolving'}
-              variant="primary"
-              colors={colors}
-              style={{
-                padding: '14px 32px',
-                fontSize: '24px',
-                height: '60px',
-                width: '210px',
-                backgroundColor: launchStatus === 'resolving' ? '#4b5563' : undefined,
-                boxShadow: launchStatus === 'resolving' ? 'none' : `0 4px 14px ${colors.glowGreen}33`
-              }}
-            >
-              {launchStatus === 'resolving' ? (
-                <>
-                  <div className="spinner" style={{ width: '18px', height: '18px' }} />
-                  <span>{t('dashboard.scanningProcess')}</span>
-                </>
-              ) : (
-                <>
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M8 5v14l11-7z" />
+              {/* Version & Profile Selectors */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                {/* Version Select */}
+                <Select
+                  value={activeVersion}
+                  onChange={handleVersionChange}
+                  options={[
+                    { value: 'Official', label: 'Official (GDK)' },
+                    ...minecraftVersions.map(v => ({ value: v.path, label: v.name }))
+                  ]}
+                  colors={colors}
+                  theme={theme}
+                  minWidth="190px"
+                  height="48px"
+                />
+
+                <Select
+                  value={activeProfile}
+                  onChange={handleProfileChange}
+                  options={profiles.length > 0 ? profiles.map(p => ({ value: p, label: p })) : [{ value: 'Default', label: 'Default' }]}
+                  colors={colors}
+                  theme={theme}
+                  minWidth="130px"
+                  height="48px"
+                />
+
+                <IconButton
+                  onClick={() => setShowCreateModal(true)}
+                  title={t('dashboard.createProfile')}
+                  colors={colors}
+                  size="48px"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
                   </svg>
-                  <span>{t('dashboard.launchButton')}</span>
-                </>
-              )}
-            </Button>
+                </IconButton>
+
+                <IconButton
+                  onClick={handleOpenProfileFolder}
+                  title="Open Profile Folder"
+                  colors={colors}
+                  size="48px"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                  </svg>
+                </IconButton>
+              </div>
+            </div>
+
+            {/* Right Side: Launch Button */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flexShrink: 0 }}>
+              <Button
+                onClick={handleLaunch}
+                disabled={launchStatus === 'resolving'}
+                variant="primary"
+                colors={colors}
+                style={{
+                  padding: '14px 32px',
+                  fontSize: '24px',
+                  height: '60px',
+                  width: '210px',
+                  backgroundColor: launchStatus === 'resolving' ? '#4b5563' : undefined,
+                  boxShadow: launchStatus === 'resolving' ? 'none' : `0 4px 14px ${colors.glowGreen}33`
+                }}
+              >
+                {launchStatus === 'resolving' ? (
+                  <>
+                    <div className="spinner" style={{ width: '18px', height: '18px' }} />
+                    <span>{t('dashboard.scanningProcess')}</span>
+                  </>
+                ) : (
+                  <>
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                    <span>{t('dashboard.launchButton')}</span>
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Launch Status Notification Panel */}
         {launchStatus !== 'idle' && (
