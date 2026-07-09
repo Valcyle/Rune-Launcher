@@ -56,6 +56,7 @@ export default function About({ colors }: AboutProps) {
         {/* Left Column: Credits */}
         <Card title={t('about.author')} colors={colors} style={{ height: '100%' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {/* Developer: Valcyle */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <div style={{
                 width: '48px',
@@ -78,6 +79,29 @@ export default function About({ colors }: AboutProps) {
               </div>
             </div>
 
+            {/* Artist / Designer: d3cafe */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '50%',
+                backgroundColor: colors.panel,
+                border: `1px solid ${colors.border}`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: colors.text,
+                fontSize: '20px',
+                fontWeight: 700
+              }}>
+                D
+              </div>
+              <div>
+                <div style={{ fontWeight: 600, color: colors.text }}>d3cafe</div>
+                <div style={{ fontSize: '12px', color: colors.textMuted }}>Artist / Designer</div>
+              </div>
+            </div>
+
             <p style={{ fontSize: '13px', color: colors.textMuted, lineHeight: 1.5, margin: '8px 0' }}>
               Rune Launcher is an open-source tool designed to ease Minecraft: Bedrock Edition mod management by automating DLL injection processes and isolating individual profile structures.
             </p>
@@ -86,7 +110,7 @@ export default function About({ colors }: AboutProps) {
               <Button onClick={handleOpenAuthor} variant="secondary" colors={colors} style={{ padding: '8px 16px', fontSize: '13px', height: '36px' }}>
                 GitHub Profile
               </Button>
-              <Button onClick={handleOpenGitHub} variant="primary" colors={colors} style={{ padding: '8px 16px', fontSize: '13px', height: '36px', backgroundColor: colors.glowPurple, boxShadow: '0 4px 12px rgba(139, 92, 246, 0.2)' }}>
+              <Button onClick={handleOpenGitHub} variant="primary" colors={colors} style={{ padding: '8px 16px', fontSize: '13px', height: '36px', backgroundColor: colors.glowPurple, boxShadow: `0 4px 12px ${colors.glowPurple}33` }}>
                 {t('about.repoLink')}
               </Button>
             </div>

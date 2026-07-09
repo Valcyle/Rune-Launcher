@@ -125,164 +125,182 @@ export default function Dashboard({
 
   return (
     <>
-      {/* Header Module */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div>
-          <h1 style={{
-            fontSize: '36px',
-            fontWeight: 800,
-            margin: '0 0 8px 0',
-            letterSpacing: '-1.2px',
-            color: colors.text
-          }}>
-            {t('dashboard.title')}
-          </h1>
-          <p style={{ color: colors.textMuted, fontSize: '14.5px', margin: 0, fontWeight: 500 }}>
-            {t('dashboard.subtitle')}
-          </p>
-        </div>
+      {/* Main Launcher Dashboard Panel */}
+      <Card
+        colors={colors}
+        style={{
+          padding: '28px',
+          borderRadius: '12px',
+          gap: '20px',
+          boxShadow: theme === 'dark'
+            ? '0 8px 30px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
+            : '0 8px 30px rgba(0, 0, 0, 0.03), 0 1px 3px rgba(0, 0, 0, 0.01)',
+          border: `1px solid ${colors.border}`,
+          marginBottom: '8px'
+        }}
+      >
+        {/* Header Module */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
+          {/* Left Side: Title & Selectors stacked vertically */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', flex: 1, minWidth: '340px' }}>
+            <div>
+              <h1 style={{
+                fontSize: '36px',
+                fontWeight: 800,
+                margin: '0 0 6px 0',
+                letterSpacing: '-1.2px',
+                color: colors.text
+              }}>
+                {t('dashboard.title')}
+              </h1>
+              <p style={{ color: colors.textMuted, fontSize: '14.5px', margin: 0, fontWeight: 500 }}>
+                {t('dashboard.subtitle')}
+              </p>
+            </div>
 
-        {/* Profile Picker & Action */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {/* Version Select */}
-            <Select
-              value={activeVersion}
-              onChange={handleVersionChange}
-              options={[
-                { value: 'Official', label: 'Official (GDK)' },
-                ...minecraftVersions.map(v => ({ value: v.path, label: v.name }))
-              ]}
-              colors={colors}
-              theme={theme}
-              minWidth="200px"
-              height="48px"
-            />
+            {/* Version & Profile Selectors */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              {/* Version Select */}
+              <Select
+                value={activeVersion}
+                onChange={handleVersionChange}
+                options={[
+                  { value: 'Official', label: 'Official (GDK)' },
+                  ...minecraftVersions.map(v => ({ value: v.path, label: v.name }))
+                ]}
+                colors={colors}
+                theme={theme}
+                minWidth="190px"
+                height="48px"
+              />
 
-            <Select
-              value={activeProfile}
-              onChange={handleProfileChange}
-              options={profiles.length > 0 ? profiles.map(p => ({ value: p, label: p })) : [{ value: 'Default', label: 'Default' }]}
-              colors={colors}
-              theme={theme}
-              minWidth="140px"
-              height="48px"
-            />
+              <Select
+                value={activeProfile}
+                onChange={handleProfileChange}
+                options={profiles.length > 0 ? profiles.map(p => ({ value: p, label: p })) : [{ value: 'Default', label: 'Default' }]}
+                colors={colors}
+                theme={theme}
+                minWidth="130px"
+                height="48px"
+              />
 
-            <IconButton
-              onClick={() => setShowCreateModal(true)}
-              title={t('dashboard.createProfile')}
-              colors={colors}
-              size="48px"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-            </IconButton>
+              <IconButton
+                onClick={() => setShowCreateModal(true)}
+                title={t('dashboard.createProfile')}
+                colors={colors}
+                size="48px"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+              </IconButton>
 
-            <IconButton
-              onClick={handleOpenProfileFolder}
-              title="Open Profile Folder"
-              colors={colors}
-              size="48px"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-              </svg>
-            </IconButton>
+              <IconButton
+                onClick={handleOpenProfileFolder}
+                title="Open Profile Folder"
+                colors={colors}
+                size="48px"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                </svg>
+              </IconButton>
+            </div>
           </div>
 
-          <Button
-            onClick={handleLaunch}
-            disabled={launchStatus === 'resolving'}
-            variant="primary"
-            colors={colors}
-            style={{
-              padding: '16px 32px',
-              fontSize: '20px',
-              height: '48px',
-              backgroundColor: launchStatus === 'resolving' ? '#4b5563' : undefined,
-              boxShadow: launchStatus === 'resolving' ? 'none' : '0 4px 12px rgba(16, 185, 129, 0.2)'
-            }}
-          >
-            {launchStatus === 'resolving' ? (
-              <>
-                <div className="spinner" style={{ width: '16px', height: '16px' }} />
-                <span>{t('dashboard.scanningProcess')}</span>
-              </>
-            ) : (
-              <>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M8 5v14l11-7z" />
-                </svg>
-                <span>{t('dashboard.launchButton')}</span>
-              </>
-            )}
-          </Button>
+          {/* Right Side: Launch Button (aligns to the right, centered vertically relative to the left block) */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flexShrink: 0 }}>
+            <Button
+              onClick={handleLaunch}
+              disabled={launchStatus === 'resolving'}
+              variant="primary"
+              colors={colors}
+              style={{
+                padding: '14px 32px',
+                fontSize: '24px',
+                height: '60px',
+                width: '210px',
+                backgroundColor: launchStatus === 'resolving' ? '#4b5563' : undefined,
+                boxShadow: launchStatus === 'resolving' ? 'none' : `0 4px 14px ${colors.glowGreen}33`
+              }}
+            >
+              {launchStatus === 'resolving' ? (
+                <>
+                  <div className="spinner" style={{ width: '18px', height: '18px' }} />
+                  <span>{t('dashboard.scanningProcess')}</span>
+                </>
+              ) : (
+                <>
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                  <span>{t('dashboard.launchButton')}</span>
+                </>
+              )}
+            </Button>
+          </div>
         </div>
-      </div>
 
-      {/* Launch Status Notification Panel */}
-      {launchStatus !== 'idle' && (
+        {/* Launch Status Notification Panel */}
+        {launchStatus !== 'idle' && (
+          <div style={{
+            padding: '18px 26px',
+            borderRadius: '8px',
+            fontSize: '15px',
+            fontWeight: 600,
+            backgroundColor: launchStatus === 'resolving' ? `${colors.glowGreen}14` : launchStatus === 'success' ? `${colors.glowGreen}1a` : 'rgba(239, 68, 68, 0.1)',
+            border: `1px solid ${launchStatus === 'failed' ? 'rgba(239, 68, 68, 0.2)' : `${colors.glowGreen}33`}`,
+            color: launchStatus === 'failed' ? '#ef4444' : colors.glowGreen,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px'
+          }}>
+            <span style={{
+              display: 'inline-block',
+              width: '10px',
+              height: '10px',
+              borderRadius: '50%',
+              backgroundColor: launchStatus === 'failed' ? '#ef4444' : colors.glowGreen,
+              animation: launchStatus === 'resolving' ? 'pulse 1.5s infinite' : 'none'
+            }} />
+            {launchStatus === 'resolving' && t('dashboard.waitingLaunch')}
+            {launchStatus === 'success' && t('dashboard.injectSuccess')}
+            {launchStatus === 'failed' && t('dashboard.launchFailed')}
+          </div>
+        )}
+
+        {/* Rotating Tips Module */}
         <div style={{
-          padding: '16px 24px',
-          borderRadius: '6px',
-          fontSize: '14px',
-          fontWeight: 600,
-          backgroundColor: launchStatus === 'resolving' ? 'rgba(16, 185, 129, 0.08)' : launchStatus === 'success' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-          border: `1px solid ${launchStatus === 'failed' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)'}`,
-          color: launchStatus === 'failed' ? '#ef4444' : '#10b981',
+          padding: '14px 20px',
+          backgroundColor: colors.panel,
+          borderRadius: '8px',
+          border: `1px solid ${colors.border}`,
+          borderLeft: `4px solid ${colors.glowGreen}`,
           display: 'flex',
           alignItems: 'center',
-          gap: '12px'
+          gap: '14px',
+          boxSizing: 'border-box'
         }}>
-          <span style={{
-            display: 'inline-block',
-            width: '8px',
-            height: '8px',
-            borderRadius: '50%',
-            backgroundColor: launchStatus === 'failed' ? '#ef4444' : '#10b981',
-            animation: launchStatus === 'resolving' ? 'pulse 1.5s infinite' : 'none'
-          }} />
-          {launchStatus === 'resolving' && t('dashboard.waitingLaunch')}
-          {launchStatus === 'success' && t('dashboard.injectSuccess')}
-          {launchStatus === 'failed' && t('dashboard.launchFailed')}
+          <div style={{ display: 'flex', alignItems: 'center', color: colors.glowGreen, flexShrink: 0 }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
+              <line x1="9" y1="18" x2="15" y2="18" />
+              <line x1="10" y1="22" x2="14" y2="22" />
+            </svg>
+          </div>
+          <div style={{
+            fontSize: '14px',
+            color: colors.textMuted,
+            fontWeight: 500,
+            transition: 'opacity 0.3s ease-in-out',
+            opacity: tipOpacity,
+            lineHeight: 1.45
+          }}>
+            {tips[tipIndex]}
+          </div>
         </div>
-      )}
-
-      {/* Rotating Tips Module */}
-      <div style={{
-        marginTop: launchStatus !== 'idle' ? '12px' : '0px',
-        marginBottom: '28px',
-        padding: '12px 18px',
-        backgroundColor: colors.panel,
-        borderRadius: '8px',
-        border: `1px solid ${colors.border}`,
-        borderLeft: `3px solid ${colors.glowGreen}`,
-        display: 'flex',
-        alignItems: 'center',
-        gap: '12px',
-        boxSizing: 'border-box'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', color: colors.glowGreen, flexShrink: 0 }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
-            <line x1="9" y1="18" x2="15" y2="18" />
-            <line x1="10" y1="22" x2="14" y2="22" />
-          </svg>
-        </div>
-        <div style={{
-          fontSize: '13px',
-          color: colors.textMuted,
-          fontWeight: 500,
-          transition: 'opacity 0.3s ease-in-out',
-          opacity: tipOpacity,
-          lineHeight: 1.4
-        }}>
-          {tips[tipIndex]}
-        </div>
-      </div>
+      </Card>
 
       {/* Split Grid: Installed Mods vs File Drop Importer */}
       <div style={{
