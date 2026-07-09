@@ -51,11 +51,11 @@ export default function Dashboard({
   const [errorMessage, setErrorMessage] = useState('');
 
   // Screen width observer for responsive launcher layout (breakpoint 1150px)
-  const [isWide, setIsWide] = useState(window.innerWidth >= 1150);
+  const [isWide, setIsWide] = useState(window.innerWidth >= 1500);
 
   useEffect(() => {
     const handleResize = () => {
-      setIsWide(window.innerWidth >= 1150);
+      setIsWide(window.innerWidth >= 1500);
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
