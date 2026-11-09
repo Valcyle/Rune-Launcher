@@ -113,13 +113,45 @@ export default function App() {
 
   // Parse version string (e.g. "1.0.0-beta.1" -> { numbers: [1, 0, 0], prerelease: "beta.1" })
   const parseSemVer = (versionStr: string) => {
-    const cleanStr = versionStr.replace(/^v/, '');
-    const [mainPart, prereleasePart] = cleanStr.split('-');
+    const cleanStr = versionStr.replace(/^v/, '').split('+')[0];
+    const dashIndex = cleanStr.indexOf('-');
+    const mainPart = dashIndex === -1 ? cleanStr : cleanStr.slice(0, dashIndex);
+    const prereleasePart = dashIndex === -1 ? null : cleanStr.slice(dashIndex + 1);
     const numbers = mainPart.split('.').map(Number);
     return { numbers, prerelease: prereleasePart || null };
   };
 
-  // Compare two SemVer versions
+  const comparePrerelease = (left: string, right: string): number => {
+    const leftParts = left.split('.');
+    const rightParts = right.split('.');
+    const length = Math.max(leftParts.length, rightParts.length);
+
+    for (let i = 0; i < length; i++) {
+      if (leftParts[i] === undefined) return -1;
+      if (rightParts[i] === undefined) return 1;
+
+      const leftNumeric = /^\d+$/.test(leftParts[i]);
+      const rightNumeric = /^\d+$/.test(rightParts[i]);
+
+      if (leftNumeric && rightNumeric) {
+        const leftNumber = Number(leftParts[i]);
+        const rightNumber = Number(rightParts[i]);
+        if (leftNumber !== rightNumber) {
+          return leftNumber < rightNumber ? -1 : 1;
+        }
+      } else if (leftNumeric !== rightNumeric) {
+        // Numeric identifiers always have lower precedence than non-numeric.
+        return leftNumeric ? -1 : 1;
+      } else {
+        if (leftParts[i] < rightParts[i]) return -1;
+        if (leftParts[i] > rightParts[i]) return 1;
+      }
+    }
+
+    return 0;
+  };
+
+  // Compare two SemVer versions (including numeric prerelease identifiers).
   const compareSemVer = (v1: string, v2: string): number => {
     const ver1 = parseSemVer(v1);
     const ver2 = parseSemVer(v2);
@@ -135,9 +167,7 @@ export default function App() {
     if (!ver1.prerelease && ver2.prerelease) return 1;
     if (!ver1.prerelease && !ver2.prerelease) return 0;
 
-    if (ver1.prerelease! < ver2.prerelease!) return -1;
-    if (ver1.prerelease! > ver2.prerelease!) return 1;
-    return 0;
+    return comparePrerelease(ver1.prerelease!, ver2.prerelease!);
   };
 
   //never change this code unless it really needs to be changed (It is auto update system which is so important)
@@ -164,7 +194,15 @@ export default function App() {
         if (!Array.isArray(releases) || releases.length === 0) {
           throw new Error('No releases found');
         }
-        latestRelease = releases[0];
+        // Pick the highest SemVer release instead of assuming API order.
+        latestRelease = releases.reduce((best: any, release: any) => {
+          if (!release || !release.tag_name) return best;
+          if (!best) return release;
+          return compareSemVer(release.tag_name, best.tag_name) > 0 ? release : best;
+        }, null);
+        if (!latestRelease) {
+          throw new Error('No releases found');
+        }
       }
 
       const remoteVersion = latestRelease.tag_name;
