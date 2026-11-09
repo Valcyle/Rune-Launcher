@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Valcyle
+// SPDX-License-Identifier: MIT
+
 #include "VersionManager.hpp"
 #include <windows.h>
 #include <shlobj.h>

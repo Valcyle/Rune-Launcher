@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Valcyle
+// SPDX-License-Identifier: MIT
+
 import { useTranslation } from 'react-i18next';
 import Card from '../components/Card';
 import Button from '../components/Button';
@@ -29,6 +32,18 @@ export default function About({ colors }: AboutProps) {
       });
     } else {
       window.open('https://github.com/Valcyle', '_blank');
+    }
+  };
+
+  const handleOpenLicense = () => {
+    const url = 'https://github.com/Valcyle/Rune-Launcher/blob/master/LICENSE';
+    if (window.chrome?.webview) {
+      window.chrome.webview.postMessage({
+        action: 'openUrl',
+        data: { url }
+      });
+    } else {
+      window.open(url, '_blank');
     }
   };
 
@@ -98,7 +113,7 @@ export default function About({ colors }: AboutProps) {
               </div>
               <div>
                 <div style={{ fontWeight: 600, color: colors.text }}>d3cafe</div>
-                <div style={{ fontSize: '12px', color: colors.textMuted }}>Artist / Designer</div>
+                <div style={{ fontSize: '12px', color: colors.textMuted }}>Logo & UI Artist</div>
               </div>
             </div>
 
@@ -137,6 +152,32 @@ export default function About({ colors }: AboutProps) {
                   {tech.name}
                 </span>
               ))}
+            </div>
+          </Card>
+
+          <Card title="License" colors={colors}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ fontWeight: 600, color: colors.text }}>MIT License</div>
+              <div style={{ fontSize: '12px', color: colors.textMuted }}>
+                Copyright (c) 2026 Valcyle
+              </div>
+              <div style={{ fontSize: '12px', color: colors.textMuted }}>
+                Logo artwork Copyright (c) 2026 d3cafe
+              </div>
+              <p style={{ fontSize: '13px', color: colors.textMuted, lineHeight: 1.5, margin: 0 }}>
+                Rune Launcher code is open source under the MIT License. Logo and
+                artwork are covered separately. Third-party notices are included
+                with the distribution. Rune Launcher is not affiliated with Mojang
+                Studios or Microsoft.
+              </p>
+              <Button
+                onClick={handleOpenLicense}
+                variant="secondary"
+                colors={colors}
+                style={{ padding: '8px 16px', fontSize: '13px', height: '36px', marginTop: '4px' }}
+              >
+                View License
+              </Button>
             </div>
           </Card>
         </div>

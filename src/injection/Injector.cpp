@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Valcyle
+// SPDX-License-Identifier: MIT
+
 #include "injection/Injector.hpp"
 #include <tlhelp32.h>
 #include <iostream>

@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Valcyle
+// SPDX-License-Identifier: MIT
+
 #include "discord/DiscordRPC.hpp"
 #include "ui/Logger.hpp"
 #include <nlohmann/json.hpp>

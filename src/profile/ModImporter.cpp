@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Valcyle
+// SPDX-License-Identifier: MIT
+
 #include "profile/ModImporter.hpp"
 #include "profile/ZipUtility.hpp"
 #include <nlohmann/json.hpp>

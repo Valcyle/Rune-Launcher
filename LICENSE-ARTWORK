@@ -1,0 +1,18 @@
+Rune Launcher artwork license
+
+Copyright (c) 2026 d3cafe. All rights reserved.
+
+The following files are original logo/artwork and are NOT licensed under the
+MIT License:
+
+- app.ico
+- ui/public/app.png
+- ui/public/bg.png
+- ui/public/favicon.svg
+- ui/src/assets/hero.png
+
+These files are included in official Rune Launcher distributions with the
+copyright holder's permission. Forks and derivative distributions must replace
+these assets or obtain written permission from the copyright holder.
+
+The Rune name and logo are also covered by TRADEMARKS.md.

@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Valcyle
+// SPDX-License-Identifier: MIT
+
 #pragma once
 #include "injection/DependencyResolver.hpp"
 #include "injection/InjectionRunner.hpp"
@@ -22,7 +25,7 @@ public:
   ~AppWindow();
 
   // Launcher Version Definition
-  static inline const std::string RUNE_LAUNCHER_VERSION = "1.0.0-beta.9";
+  static inline const std::string RUNE_LAUNCHER_VERSION = "1.0.0-beta.10";
 
   /**
    * @brief Creates the Win32 window and initializes WebView2.

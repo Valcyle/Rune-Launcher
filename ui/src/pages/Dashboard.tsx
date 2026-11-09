@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Valcyle
+// SPDX-License-Identifier: MIT
+
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ModInfo, ExternalInfo, MinecraftVersion } from '../App';

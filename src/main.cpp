@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Valcyle
+// SPDX-License-Identifier: MIT
+
 #include "profile/ProfileManager.hpp"
 #include "profile/ModImporter.hpp"
 #include "injection/DependencyResolver.hpp"
@@ -129,8 +132,10 @@ int main(int argc, char* argv[]) {
                     // Extract DLL next to the installed target
                     extractFile(launcherFolder / "WebView2Loader.dll", rune::EMBEDDED_LOADER_DLL, rune::EMBEDDED_LOADER_DLL_SIZE);
 
+#ifdef RUNE_WITH_LOADER
                     // Extract RuneCore.dll to rootPath for the InjectionRunner
                     extractFile(rootPath / "RuneCore.dll", rune::EMBEDDED_RUNE_CORE_DLL, rune::EMBEDDED_RUNE_CORE_DLL_SIZE);
+#endif
 
                     // Extract all UI static files
                     for (size_t i = 0; i < rune::EMBEDDED_UI_FILES_COUNT; ++i) {
@@ -175,8 +180,10 @@ int main(int argc, char* argv[]) {
                 if (!std::filesystem::exists(dllPath)) {
                     extractFile(dllPath, rune::EMBEDDED_LOADER_DLL, rune::EMBEDDED_LOADER_DLL_SIZE);
                 }
+#ifdef RUNE_WITH_LOADER
                 // Unpack RuneCore.dll on startup for update consistency
                 extractFile(rootPath / "RuneCore.dll", rune::EMBEDDED_RUNE_CORE_DLL, rune::EMBEDDED_RUNE_CORE_DLL_SIZE);
+#endif
 
                 for (size_t i = 0; i < rune::EMBEDDED_UI_FILES_COUNT; ++i) {
                     const auto& uiFile = rune::EMBEDDED_UI_FILES[i];

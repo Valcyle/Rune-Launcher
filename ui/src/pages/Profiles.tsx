@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Valcyle
+// SPDX-License-Identifier: MIT
+
 import { useState } from 'react';
 import type { ModInfo, ExternalInfo } from '../App';
 import Modal from '../components/Modal';
