@@ -9,6 +9,28 @@
 
 namespace rune {
 
+namespace {
+
+// Writes the active profile next to RuneCore.dll so the injected loader can
+// discover which profile it should load. This file is runtime state only.
+bool writeSessionFile(const std::filesystem::path &rootPath,
+                      const std::string &profileName) {
+  try {
+    nlohmann::json session = {{"profile", profileName},
+                              {"api_version", "0.1.0"}};
+    std::ofstream file(rootPath / "session.json", std::ios::trunc);
+    if (!file.is_open()) {
+      return false;
+    }
+    file << session.dump(2);
+    return true;
+  } catch (const std::exception &) {
+    return false;
+  }
+}
+
+} // namespace
+
 InjectionRunner::InjectionRunner(ProfileManager profileManager,
                                  DependencyResolver resolver)
     : m_profileManager(std::move(profileManager)),
@@ -51,6 +73,12 @@ bool InjectionRunner::run(const std::string &activeProfileName,
 
   // 1. Add global Loader Core DLL (RuneCore.dll)
   std::filesystem::path rootPath = profilePath.parent_path().parent_path();
+  if (!writeSessionFile(rootPath, activeProfileName)) {
+    Logger::getInstance().log(
+        Logger::Level::Warning, "InjectionRunner",
+        "Failed to write session.json; RuneCore will not know the active "
+        "profile.");
+  }
   dllsToInject.push_back(std::filesystem::absolute(rootPath / "RuneCore.dll"));
 
   // Helper lambda to check if a string exists in a vector
@@ -242,27 +270,38 @@ bool InjectionRunner::run(const std::string &activeProfileName,
   // If any injection fails, report failure and return false.
   // Loop through dllsToInject and call rune::injectDll(pid, path) for each DLL.
   // If any injection fails, report failure and return false.
+  bool coreInjectionFailed = false;
   for (size_t i = 0; i < dllsToInject.size(); ++i) {
     const auto &dllPath = dllsToInject[i];
-    // temporary remove index 0 dll (RuneCore.dll) for now
-    if (i == 0) {
-      continue;
-    }
     Logger::getInstance().log(Logger::Level::Info, "InjectionRunner",
                               "Injecting DLL: " + dllPath.string());
     if (!injectDll(pid, dllPath)) {
+      if (i == 0) {
+        coreInjectionFailed = true;
+        Logger::getInstance().log(
+            Logger::Level::Warning, "InjectionRunner",
+            "RuneCore.dll injection failed; continuing with profile DLLs "
+            "(loader features disabled).");
+        continue;
+      }
       Logger::getInstance().log(Logger::Level::Error, "InjectionRunner",
                                 "Failed to inject DLL: " + dllPath.string());
       return false;
     }
 
     // Sleep between injections to allow DLLs to safely complete
-    // initializations. Sleep 1000ms after RuneCore.dll (the first item), and
-    // 2000ms for subsequent DLLs.
+    // initializations. Give RuneCore a little longer to start its loader
+    // thread before injecting profile DLLs.
     if (i < dllsToInject.size() - 1) {
       std::this_thread::sleep_for(
-          std::chrono::milliseconds(i == 0 ? 1000 : 2000));
+          std::chrono::milliseconds(i == 0 ? 1500 : 2000));
     }
+  }
+
+  if (coreInjectionFailed) {
+    Logger::getInstance().log(
+        Logger::Level::Warning, "InjectionRunner",
+        "Injection sequence completed without RuneCore.dll.");
   }
 
   return true;
