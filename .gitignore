@@ -35,4 +35,12 @@ build_compile_commands/
 compile_commands.json
 .clangd
 ui/.gitignore
-test_xbox_creds.txt
+
+# Sensitive runtime data — never commit
+*creds*
+*credential*
+rune_session*.json
+*.log
+.env
+.env.*
+!.env.example

@@ -52,7 +52,7 @@ npm install
 npm run build
 cd ..
 ```
-This generates the static files in the [ui/dist/](file:///c:/Users/yamad/Desktop/projects/rune-project/Rune-Launcher/ui/dist) directory.
+This generates the static files in the [`ui/dist/`](./ui/dist/) directory.
 
 #### 2. Configure CMake to download WebView2
 ```powershell
@@ -61,7 +61,7 @@ cmake -B build_cmake -G "MinGW Makefiles"
 This step downloads the required Microsoft WebView2 SDK NuGet package under `build_cmake/webview2_sdk/` and extracts `WebView2Loader.dll`.
 
 #### 3. Embed Assets into C++ Source
-Run the resource embedding generator (part of `build.ps1` script block 3) to serialize frontend assets, `WebView2Loader.dll`, and `RuneCore.dll` into hexadecimal byte arrays in [src/GeneratedResources.cpp](file:///c:/Users/yamad/Desktop/projects/rune-project/Rune-Launcher/src/GeneratedResources.cpp).
+Run the resource embedding generator (part of `build.ps1` script block 3) to serialize frontend assets, `WebView2Loader.dll`, and `RuneCore.dll` into hexadecimal byte arrays in [`src/ui/GeneratedResources.cpp`](./src/ui/GeneratedResources.cpp).
 
 #### 4. Compile the Application
 ```powershell
@@ -116,7 +116,7 @@ profiles/
 ```
 
 ### Self-Packaging Mechanism
-To maintain a single-binary distribution strategy, `build.ps1` packages binary assets directly into [src/ui/GeneratedResources.cpp](file:///c:/Users/yamad/Desktop/projects/rune-project/Rune-Launcher/src/ui/GeneratedResources.cpp).
+To maintain a single-binary distribution strategy, `build.ps1` packages binary assets directly into [`src/ui/GeneratedResources.cpp`](./src/ui/GeneratedResources.cpp).
 On startup:
 - **Development Mode**: Detected if `CMakeLists.txt` is found in the directory hierarchy. The app runs directly in the source directory.
 - **Production Mode**: Prompts the user to install. If accepted, it creates `%USERPROFILE%\AppData\Local\Rune\Launcher`, installs `launcher.exe`, extracts `WebView2Loader.dll`, `RuneCore.dll`, and extracts all static UI files into the `ui/` subdirectory. It also creates a Desktop shortcut.
