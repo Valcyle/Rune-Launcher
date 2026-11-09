@@ -50,3 +50,6 @@ rune_session*.json
 .env
 .env.*
 !.env.example
+
+# WebView2 runtime data
+*.WebView2/
