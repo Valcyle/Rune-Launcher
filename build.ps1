@@ -1,9 +1,13 @@
 # Build script for RuneLauncher using CMake and Single EXE embedding generator
 # Usage: .\build.ps1
 
+$ErrorActionPreference = "Stop"
+Set-Location $PSScriptRoot
+$root = $PSScriptRoot
+
 # 1. Build React UI
 Write-Host "Building React UI..."
-Push-Location ui
+Push-Location (Join-Path $root "ui")
 npm run build
 if ($LASTEXITCODE -ne 0) {
     Write-Host "React UI Build Failed" -ForegroundColor Red
@@ -13,11 +17,11 @@ if ($LASTEXITCODE -ne 0) {
 Pop-Location
 
 # 2. Ensure CMake is configured so WebView2 SDK is downloaded and unpacked
-if (-not (Test-Path "build_cmake")) {
-    New-Item -ItemType Directory -Path "build_cmake" | Out-Null
+if (-not (Test-Path (Join-Path $root "build_cmake"))) {
+    New-Item -ItemType Directory -Path (Join-Path $root "build_cmake") | Out-Null
 }
 
-if (-not (Test-Path "build_cmake/webview2_sdk/build/native/x64/WebView2Loader.dll")) {
+if (-not (Test-Path (Join-Path $root "build_cmake/webview2_sdk/build/native/x64/WebView2Loader.dll"))) {
     Write-Host "Configuring CMake first to resolve dependencies..."
     cmake -B build_cmake -G "Visual Studio 18 2026" -A x64
     if ($LASTEXITCODE -ne 0) {
@@ -28,7 +32,7 @@ if (-not (Test-Path "build_cmake/webview2_sdk/build/native/x64/WebView2Loader.dl
 
 # 3. Generate src/ui/GeneratedResources.cpp from static assets
 Write-Host "Generating Embedded Resources..."
-$cppPath = "src/ui/GeneratedResources.cpp"
+$cppPath = Join-Path $root "src/ui/GeneratedResources.cpp"
 $utf8 = New-Object System.Text.UTF8Encoding($false) # No BOM
 $stream = New-Object System.IO.FileStream($cppPath, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write)
 $writer = New-Object System.IO.StreamWriter($stream, $utf8)
@@ -54,18 +58,19 @@ function Write-HexPayload([string]$filePath, [string]$varName) {
 }
 
 # Embed WebView2Loader.dll
-Write-HexPayload "build_cmake/webview2_sdk/build/native/x64/WebView2Loader.dll" "EMBEDDED_LOADER_DLL"
+Write-HexPayload (Join-Path $root "build_cmake/webview2_sdk/build/native/x64/WebView2Loader.dll") "EMBEDDED_LOADER_DLL"
 
 # Embed RuneCore.dll
-Write-HexPayload "RuneCore.dll" "EMBEDDED_RUNE_CORE_DLL"
+Write-HexPayload (Join-Path $root "RuneCore.dll") "EMBEDDED_RUNE_CORE_DLL"
 
 # Embed UI files individually
-$uiFiles = Get-ChildItem -Path "ui/dist" -Recurse -File
+$uiDist = Join-Path $root "ui/dist"
+$uiFiles = Get-ChildItem -Path $uiDist -Recurse -File
 $fileList = New-Object System.Collections.Generic.List[PSObject]
 $fileIndex = 0
 
 foreach ($file in $uiFiles) {
-    $relativePath = $file.FullName.Substring((Get-Item "ui/dist").FullName.Length + 1).Replace("\", "/")
+    $relativePath = $file.FullName.Substring((Get-Item $uiDist).FullName.Length + 1).Replace("\", "/")
     $varName = "UI_FILE_$fileIndex"
     
     # Write raw hex payload
