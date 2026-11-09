@@ -15,10 +15,15 @@ releases.
 
 License references:
 
-- `include/nlohmann/json.hpp` (SPDX-License-Identifier: MIT)
-- `../RuneModLoader/external/minhook/LICENSE.txt`
-- `../RuneModLoader/external/imgui/LICENSE.txt`
-- `build_cmake/webview2_sdk/LICENSE.txt` (downloaded at configure time)
+- `third_party/nlohmann_json/LICENSE.txt` (and `include/nlohmann/json.hpp`,
+  SPDX-License-Identifier: MIT)
+- `third_party/webview2/LICENSE.txt`
+- `../RuneModLoader/external/minhook/LICENSE.txt` (private loader build only)
+- `../RuneModLoader/external/imgui/LICENSE.txt` (private loader build only)
+
+`WebView2Loader.dll` is redistributed under the Microsoft WebView2 SDK license.
+The WebView2 Runtime itself is not included; users install it separately
+(usually already present on Windows 11 and updated Windows 10).
 
 ## UI
 
@@ -38,6 +43,7 @@ dependencies and are not licensed under the MIT License. See `LICENSE-ARTWORK`.
 
 - Include `LICENSE`, `NOTICE`, `LICENSE-ARTWORK`, and this file in the release
   archive/installer.
+- Include the `third_party/` license texts in the release archive.
 - Keep the MinHook and WebView2 copyright notices with the distributed binaries.
 - Do not remove license headers from bundled third-party source files.
 
