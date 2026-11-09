@@ -1,6 +1,6 @@
 # RuneLauncher
 
-RuneLauncher is a native, high-performance, multi-profile launcher for `RuneModLoader`. It is designed as a hybrid Win32 / WebView2 desktop application that combines the performance of native C++ file operations and DLL injection with the rich user experience of a React/TypeScript interface.
+RuneLauncher is a native, high-performance, multi-profile launcher for the RuneModLoader project (currently in private beta). It is designed as a hybrid Win32 / WebView2 desktop application that combines the performance of native C++ file operations and DLL injection with the rich user experience of a React/TypeScript interface.
 
 ## Key Features
 - **Isolated Profiles**: Create and switch between multiple independent modding environments (Profiles).
