@@ -11,11 +11,13 @@ Related: `RuneModLoader/docs/mod-api.md`, `RuneModLoader/docs/multiplayer.md`.
 |---|---|
 | `launcher.exe` | Win32/WebView2 host, profile UI, import, dependency check, injection, update |
 | React UI (`ui/`) | Profile management, mod list, settings, update UI |
-| `RuneCore.dll` | Injected loader: session read, mod discovery, API host, mod lifecycle |
+| `RuneCore.dll` | Optional private loader (`-WithLoader` builds only): session read, mod discovery, API host, mod lifecycle |
 | `profiles/` | Isolated mod sets (`mods/`, `external/`, `profile_config.json`) |
 | Discord RPC | Optional presence, separate from mod loading |
 
 ## Runtime flow
+
+Public launcher (default, no RuneCore):
 
 ```text
 launcher starts
@@ -24,23 +26,32 @@ launcher starts
   -> show WebView2 UI (ui/dist in dev, AppData Launcher/ui in production)
   -> user presses Launch
        -> resolve dependencies for the active profile
-       -> write <root>/session.json
        -> find or start Minecraft.Windows.exe
-       -> inject RuneCore.dll
        -> inject external/*.dll
-       -> RuneCore reads session.json and loads mods
+       -> inject mod entrypoints directly (legacy fallback)
 ```
 
-If RuneCore injection fails, the launcher falls back to injecting external and
-mod entrypoint DLLs directly. That path keeps legacy mods working but does not
-provide the Rune mod API or lifecycle.
+Private loader build (`build.ps1 -WithLoader`):
+
+```text
+  -> write <root>/session.json
+  -> inject RuneCore.dll
+  -> inject external/*.dll
+  -> RuneCore reads session.json and loads mods
+```
+
+If RuneCore injection fails in the private loader build, the launcher falls back
+to direct external/mod injection. The public launcher never writes
+`session.json` and does not provide the Rune mod API lifecycle.
 
 ## session.json
+
+Private loader builds only:
 
 ```json
 {
   "profile": "RML",
-  "api_version": "0.2.0"
+  "api_version": "0.1.0"
 }
 ```
 
@@ -55,8 +66,16 @@ The file is runtime state and must stay gitignored.
 
 ## Injection ownership
 
-- Launcher injects `RuneCore.dll` first.
-- Launcher injects `external/*.dll` next.
+Public launcher:
+
+- Injects `external/*.dll` and mod entrypoints directly.
+- Does not inject RuneCore and does not call the Rune mod API.
+- `.runemod` packages still import, but their entrypoint DLLs are loaded by the
+  launcher, not by RuneCore.
+
+Private loader build:
+
+- Injects `RuneCore.dll` first, then `external/*.dll`.
 - RuneCore loads `mods/*` entrypoints and calls the mod API.
 - The launcher must not inject mod entrypoints when RuneCore succeeded; doing so
   creates a second module reference and prevents clean unload.
@@ -64,19 +83,27 @@ The file is runtime state and must stay gitignored.
 
 ## Embedding decision
 
-Current implementation:
+Public launcher (default):
 
-- `build.ps1` converts `RuneCore.dll`, `WebView2Loader.dll`, and every
-  `ui/dist` file into hex arrays in `src/ui/GeneratedResources.cpp`.
+- `build.ps1` embeds `WebView2Loader.dll` and every `ui/dist` file as hex arrays
+  in `src/ui/GeneratedResources.cpp`.
+- `RuneCore.dll` is not embedded; the generated RuneCore array has size 0.
+- `launcher.exe` is about 2.8 MB.
 - The generated source is about 12 MB because bytes are stored as text.
-- `launcher.exe` is about 3.3 MB. Embedded RuneCore contributes about 0.5 MB to
-  the binary, so download size is not the main problem.
-- The real costs are build time, repository size, and coupling launcher releases
-  to loader releases.
+
+Private loader build (`build.ps1 -WithLoader`):
+
+- Additionally embeds `RuneCore.dll` (about 0.5 MB), producing a launcher around
+  3.3 MB.
+- This build is for private beta/testing only and must not be published while
+  loader distribution is paused.
 
 Decision:
 
-- v1 keeps RuneCore bundled as the last-known-good fallback.
+- Keep RuneCore out of public launcher releases. Public value is profile
+  management, mod import, dependency checks, external DLL injection, and update.
+- Keep the private `-WithLoader` path for testing the loader without changing the
+  public build.
 - Replace hex source generation with PE `RCDATA` resources, and optionally embed
   the UI as a single zip extracted on first run/update. This is a build and
   maintainability improvement, not a size emergency.
@@ -86,18 +113,20 @@ Decision:
 
 | Phase | Behavior |
 |---|---|
-| v1 | Bundled RuneCore; auto-update unchanged |
+| v1 public | No loader in public launcher releases; external DLL injection only |
+| private beta | `-WithLoader` build for testers; RuneModLoader repo stays private |
 | v1.1 | Local loader store: `%LOCALAPPDATA%\Rune\loaders\<version>\RuneCore.dll` |
 | v1.2 | `loader_manifest.json` with version, SHA256, minimum launcher version |
-| Later | Download required loader version; fall back to bundled on any failure |
+| Later | Download required loader version; fall back to a private bundled baseline |
 
 Safety rules for future loader updates:
 
+- Do not ship a loader-enabled public build until loader distribution is approved.
 - Never remove the last-known-good loader.
 - Download to a temporary path, verify SHA256, then atomically rename.
 - Keep launcher update and loader update independent.
-- Do not block game launch if loader download fails; use the bundled fallback.
-- Log the selected loader version and source (bundled/downloaded).
+- Do not block game launch if loader download fails.
+- Log the selected loader version and source.
 
 ## Profiles and config
 
@@ -133,17 +162,26 @@ Safety rules for future loader updates:
 
 ## Build and CI proposal
 
+Public build (default):
+
 ```text
-build RuneModLoader (Release)
-  -> copy RuneCore.dll to Rune-Launcher
-  -> npm ci && npm run build
-  -> build launcher
+npm ci && npm run build
+  -> .\build.ps1              (launcher-only)
   -> package release assets
   -> upload with version, SHA256, release notes
 ```
 
-CI should build both repos from clean checkouts and fail if the embedded loader
-hash does not match the loader build output.
+Private loader build:
+
+```text
+build RuneModLoader (Release)
+  -> copy RuneCore.dll to Rune-Launcher
+  -> .\build.ps1 -WithLoader
+  -> test only; do not publish while loader distribution is paused
+```
+
+CI should build the public launcher-only artifact from a clean checkout. If a
+private loader job exists, it must be separate and must not upload public assets.
 
 ## Open questions
 

@@ -4,6 +4,8 @@
 cmake_minimum_required(VERSION 3.15)
 project(RuneLauncher LANGUAGES CXX)
 
+option(RUNE_WITH_LOADER "Bundle RuneCore and enable loader injection" OFF)
+
 # Enforce static runtime linking for MSVC globally before target creation
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
@@ -39,6 +41,10 @@ set(SOURCES
 )
 
 add_executable(launcher ${SOURCES} app.rc)
+
+if(RUNE_WITH_LOADER)
+    target_compile_definitions(launcher PRIVATE RUNE_WITH_LOADER)
+endif()
 
 # WebView2 SDK Auto-Download Setup
 set(WEBVIEW2_VERSION "1.0.1264.42")

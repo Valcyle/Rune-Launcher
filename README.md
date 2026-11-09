@@ -7,7 +7,7 @@ RuneLauncher is a native, high-performance, multi-profile launcher for the RuneM
 - **Auto-Sorting Mod Importer**: Automatically detects, validates, extracts, and sorts `.runemod` (ZIP archives) and standalone `.dll` mods.
 - **Dependency Resolver**: Full dependency checking supporting semantic versioning operators (`>=` and `^`).
 - **Sequential Injector**: Performs native process discovery and injects mod loader cores and libraries in a strict sequential order.
-- **Single-EXE Packaging**: Embeds all frontend assets, supporting DLLs, and loader cores directly inside the executable.
+- **Single-EXE Packaging**: Embeds frontend assets and WebView2 support directly inside the executable. Private loader builds additionally embed `RuneCore.dll`.
 - **Discord Rich Presence (RPC)**: Integrated lightweight, native Named Pipe IPC connection showcasing your active modding profile and gameplay status directly on Discord.
 
 ---
@@ -36,11 +36,21 @@ To build and develop RuneLauncher, ensure you have the following installed:
 ### Quick Build (Recommended)
 An automated PowerShell script handles building the React frontend, generating C++ embedded payloads, downloading dependencies, and compiling the C++ executable.
 
-Run the following command from the repository root:
+The default build is **launcher-only**: it injects user-supplied external DLLs and mod entrypoints but does not bundle RuneCore.
+
 ```powershell
 .\build.ps1
 ```
-The compiled binary will be generated under `build_cmake/launcher.exe`.
+
+The compiled binary will be generated under `build_cmake/Release/launcher.exe`.
+
+For the private loader build, place `RuneCore.dll` in the repository root and run:
+
+```powershell
+.\build.ps1 -WithLoader
+```
+
+The private loader build embeds RuneCore and enables the Rune mod API lifecycle. Do not publish that build unless the loader distribution is approved.
 
 ### Manual Build Step-by-Step
 If you prefer to run the steps manually, follow these instructions:
@@ -61,7 +71,7 @@ cmake -B build_cmake -G "MinGW Makefiles"
 This step downloads the required Microsoft WebView2 SDK NuGet package under `build_cmake/webview2_sdk/` and extracts `WebView2Loader.dll`.
 
 #### 3. Embed Assets into C++ Source
-Run the resource embedding generator (part of `build.ps1` script block 3) to serialize frontend assets, `WebView2Loader.dll`, and `RuneCore.dll` into hexadecimal byte arrays in [`src/ui/GeneratedResources.cpp`](./src/ui/GeneratedResources.cpp).
+Run the resource embedding generator (part of `build.ps1` script block 3) to serialize frontend assets and `WebView2Loader.dll` into hexadecimal byte arrays in [`src/ui/GeneratedResources.cpp`](./src/ui/GeneratedResources.cpp). The private `-WithLoader` build additionally embeds `RuneCore.dll`.
 
 #### 4. Compile the Application
 ```powershell
@@ -77,7 +87,7 @@ cmake --build build_cmake
 .
 ├── CMakeLists.txt              # CMake build configuration
 ├── build.ps1                   # Automated build and asset embedding script
-├── RuneCore.dll                # Loader Core injected on startup
+├── RuneCore.dll                # Optional: private loader build only
 ├── spec.md                     # Project system specification
 ├── include/
 │   └── nlohmann/               # JSON parsing header library
@@ -119,7 +129,7 @@ profiles/
 To maintain a single-binary distribution strategy, `build.ps1` packages binary assets directly into [`src/ui/GeneratedResources.cpp`](./src/ui/GeneratedResources.cpp).
 On startup:
 - **Development Mode**: Detected if `CMakeLists.txt` is found in the directory hierarchy. The app runs directly in the source directory.
-- **Production Mode**: Prompts the user to install. If accepted, it creates `%USERPROFILE%\AppData\Local\Rune\Launcher`, installs `launcher.exe`, extracts `WebView2Loader.dll`, `RuneCore.dll`, and extracts all static UI files into the `ui/` subdirectory. It also creates a Desktop shortcut.
+- **Production Mode**: Prompts the user to install. If accepted, it creates `%USERPROFILE%\AppData\Local\Rune\Launcher`, installs `launcher.exe`, extracts `WebView2Loader.dll`, extracts all static UI files into the `ui/` subdirectory, and (in private loader builds) extracts `RuneCore.dll`. It also creates a Desktop shortcut.
 - **Self-Updating**: On every launch in Production Mode, the embedded resources are unpacked to the AppData folder, ensuring the UI is always in sync with the compiled executable version.
 
 ---
@@ -249,7 +259,7 @@ If the launcher displays a blank/white screen or errors on startup, ensure the M
 
 ### Injection Failures
 - Run the launcher as an Administrator if the target process has high privilege levels.
-- Check that the loader core `RuneCore.dll` is present in the application parent directory.
+- For private loader builds, check that the loader core `RuneCore.dll` is present in the application parent directory.
 - Verify that dependency resolution passes; look for errors outputted in the debug log.
 
 ---

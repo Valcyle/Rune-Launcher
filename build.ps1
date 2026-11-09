@@ -2,11 +2,21 @@
 # SPDX-License-Identifier: MIT
 
 # Build script for RuneLauncher using CMake and Single EXE embedding generator
-# Usage: .\build.ps1
+# Usage: .\build.ps1              (launcher-only, no RuneCore)
+#        .\build.ps1 -WithLoader  (private loader build)
+param(
+    [switch]$WithLoader
+)
 
 $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
 $root = $PSScriptRoot
+$loaderFlag = if ($WithLoader) { "ON" } else { "OFF" }
+
+if ($WithLoader -and -not (Test-Path (Join-Path $root "RuneCore.dll"))) {
+    Write-Host "RuneCore.dll is required for -WithLoader." -ForegroundColor Red
+    exit 1
+}
 
 # 1. Build React UI
 Write-Host "Building React UI..."
@@ -26,7 +36,7 @@ if (-not (Test-Path (Join-Path $root "build_cmake"))) {
 
 if (-not (Test-Path (Join-Path $root "build_cmake/webview2_sdk/build/native/x64/WebView2Loader.dll"))) {
     Write-Host "Configuring CMake first to resolve dependencies..."
-    cmake -B build_cmake -G "Visual Studio 18 2026" -A x64
+    cmake -B build_cmake -G "Visual Studio 18 2026" -A x64 -DRUNE_WITH_LOADER=$loaderFlag
     if ($LASTEXITCODE -ne 0) {
         Write-Host "Initial CMake Config Failed" -ForegroundColor Red
         exit $LASTEXITCODE
@@ -63,8 +73,14 @@ function Write-HexPayload([string]$filePath, [string]$varName) {
 # Embed WebView2Loader.dll
 Write-HexPayload (Join-Path $root "build_cmake/webview2_sdk/build/native/x64/WebView2Loader.dll") "EMBEDDED_LOADER_DLL"
 
-# Embed RuneCore.dll
-Write-HexPayload (Join-Path $root "RuneCore.dll") "EMBEDDED_RUNE_CORE_DLL"
+# Embed RuneCore.dll only for private loader builds.
+if ($WithLoader) {
+    Write-HexPayload (Join-Path $root "RuneCore.dll") "EMBEDDED_RUNE_CORE_DLL"
+} else {
+    $writer.WriteLine("const unsigned char EMBEDDED_RUNE_CORE_DLL[] = {0};")
+    $writer.WriteLine("const size_t EMBEDDED_RUNE_CORE_DLL_SIZE = 0;")
+    $writer.WriteLine()
+}
 
 # Embed UI files individually
 $uiDist = Join-Path $root "ui/dist"
@@ -102,7 +118,7 @@ $stream.Close()
 
 # 4. Standard Build
 Write-Host "Configuring and building project with CMake..."
-cmake -B build_cmake -G "Visual Studio 18 2026" -A x64
+cmake -B build_cmake -G "Visual Studio 18 2026" -A x64 -DRUNE_WITH_LOADER=$loaderFlag
 if ($LASTEXITCODE -ne 0) {
     Write-Host "CMake Configuration Failed" -ForegroundColor Red
     exit $LASTEXITCODE
