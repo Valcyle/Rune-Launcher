@@ -39,6 +39,9 @@ ui/.gitignore
 # Runtime session handoff written before injection
 session.json
 
+# Local debug console opt-in
+rune_debug.flag
+
 # Sensitive runtime data — never commit
 *creds*
 *credential*

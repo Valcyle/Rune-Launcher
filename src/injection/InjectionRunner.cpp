@@ -122,6 +122,9 @@ bool InjectionRunner::run(const std::string &activeProfileName,
   }
 
   // 3. Add Mod DLLs
+  // RuneCore loads these itself after injection. Keep the list as a fallback
+  // for the legacy path where RuneCore injection fails.
+  const size_t modStartIndex = dllsToInject.size();
   std::filesystem::path modsPath = profilePath / "mods";
   std::vector<std::string> diskMods;
   if (std::filesystem::exists(modsPath)) {
@@ -273,6 +276,13 @@ bool InjectionRunner::run(const std::string &activeProfileName,
   bool coreInjectionFailed = false;
   for (size_t i = 0; i < dllsToInject.size(); ++i) {
     const auto &dllPath = dllsToInject[i];
+    if (!coreInjectionFailed && i >= modStartIndex) {
+      Logger::getInstance().log(
+          Logger::Level::Debug, "InjectionRunner",
+          "RuneCore owns mod loading; skipping direct injection: " +
+              dllPath.string());
+      continue;
+    }
     Logger::getInstance().log(Logger::Level::Info, "InjectionRunner",
                               "Injecting DLL: " + dllPath.string());
     if (!injectDll(pid, dllPath)) {
