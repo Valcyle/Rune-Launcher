@@ -251,3 +251,23 @@ If the launcher displays a blank/white screen or errors on startup, ensure the M
 - Run the launcher as an Administrator if the target process has high privilege levels.
 - Check that the loader core `RuneCore.dll` is present in the application parent directory.
 - Verify that dependency resolution passes; look for errors outputted in the debug log.
+
+---
+
+## License
+
+MIT License. See [LICENSE](./LICENSE) and [NOTICE](./NOTICE).
+
+Copyright (c) 2026 Valcyle.
+
+Logo and artwork are Copyright (c) 2026 d3cafe and are covered separately by
+[LICENSE-ARTWORK](./LICENSE-ARTWORK), not the MIT License.
+
+Third-party components and their licenses are listed in
+[THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md). The Rune name and logo are
+covered by [TRADEMARKS.md](./TRADEMARKS.md); the MIT license does not grant
+trademark rights.
+
+Rune Launcher is not affiliated with Mojang Studios or Microsoft. Minecraft is a
+trademark of Mojang Synergies AB.
+

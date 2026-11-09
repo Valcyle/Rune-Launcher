@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Valcyle
+// SPDX-License-Identifier: MIT
+
 #include "profile/ProfileManager.hpp"
 #include "profile/ModImporter.hpp"
 #include "injection/DependencyResolver.hpp"

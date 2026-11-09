@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Valcyle
+# SPDX-License-Identifier: MIT
+
 # Update compile_commands.json for clangd diagnostics/autocomplete
 Write-Host "Generating compile commands using CMake with MinGW generator..." -ForegroundColor Cyan
 cmake -B build_compile_commands -G "MinGW Makefiles" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON

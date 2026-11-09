@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Valcyle
+// SPDX-License-Identifier: MIT
+
 #include "injection/InjectionRunner.hpp"
 #include "injection/Injector.hpp"
 #include "ui/Logger.hpp"

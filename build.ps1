@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Valcyle
+# SPDX-License-Identifier: MIT
+
 # Build script for RuneLauncher using CMake and Single EXE embedding generator
 # Usage: .\build.ps1
 

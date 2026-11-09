@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Valcyle
+// SPDX-License-Identifier: MIT
+
 #include "ui/AppWindow.hpp"
 #include "ui/VersionManager.hpp"
 #include "discord/DiscordRPC.hpp"

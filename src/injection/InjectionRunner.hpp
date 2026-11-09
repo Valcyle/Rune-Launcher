@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Valcyle
+// SPDX-License-Identifier: MIT
+
 #pragma once
 #include "profile/ProfileManager.hpp"
 #include "injection/DependencyResolver.hpp"
