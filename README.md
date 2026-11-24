@@ -264,6 +264,12 @@ If the launcher displays a blank/white screen or errors on startup, ensure the M
 
 ---
 
+## Monetization
+
+Rune Launcher is a free, non-commercial project. See
+[docs/monetization-policy.md](./docs/monetization-policy.md) for the donation,
+distribution, and compliance policy.
+
 ## License
 
 MIT License. See [LICENSE](./LICENSE) and [NOTICE](./NOTICE).
